@@ -9,7 +9,7 @@ import config from '../config.json'
 import { clusterStatsI, EpochInfoI } from './validator/interfaces';
 import GlobalSearch from "./navbar-search";
 import { PublicKey } from '@solana/web3.js';
-import StakewizLogo from '../public/images/logo-horizontal-sm.svg'
+import StakewizLogo from '../public/images/logo-horizontal-sm-2.svg'
 const API_URL = process.env.API_BASE_URL;
 
 interface HeaderProps {
