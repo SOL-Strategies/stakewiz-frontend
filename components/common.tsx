@@ -9,18 +9,13 @@ import config from '../config.json'
 import { clusterStatsI, EpochInfoI } from './validator/interfaces';
 import GlobalSearch from "./navbar-search";
 import { PublicKey } from '@solana/web3.js';
-<<<<<<< HEAD
 import StakewizLogo from '../public/images/logo-horizontal-sm.svg'
-=======
-import StakewizLogo from '../public/images/logo-horizontal-ssi.svg'
-
->>>>>>> master
 const API_URL = process.env.API_BASE_URL;
 
 interface HeaderProps {
   title: string;
 
-}
+} 
 
 const Spinner: FC<{wrapper?: boolean}> = ({wrapper}) => {
   
