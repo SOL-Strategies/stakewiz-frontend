@@ -29,10 +29,10 @@ export default function Home() {
                                     By using this website and creating alerts you agree to this privacy policy.
                                 </p>
                                 <p>
-                                    We only collect the minimum amount of data required to process your request and will never sell your data. We commit to keeping the data secure and maintaining our systems and databases in a way that they are safe from unauthorized access.
+                                    We only collect the minimum amount of data required to process your request and will never sell your data. We commit to keeping the data secure and maintaining our systems and databases in a way that they are safe from unauthorized access. The only sensitive data we may store in connection with your use of this website, and depending on how you use our website, is your email address, IP address, Telegram account details (including those provided to us by Telegram) and your cryptocurrency wallet address. These are stored only to provide the functionality you request from us.
                                 </p>
                                 <p>
-                                    We will never permit third parties to access your data or send unsolicited emails or messages to you.
+                                    We will never permit third parties to access your data or send unsolicited emails or messages to you other than disclosures to law enforcement authorities pursuant to a legally valid request.
                                 </p>
                                 <p>
                                     We will only send you emails about our operations, products or promotions where you have opted in to receive such emails, and you may opt out at any time.
@@ -41,13 +41,13 @@ export default function Home() {
                                     You can cancel your alerts at any time and once cancelled we will not send you any further emails relating to them. Cancelling your alerts also cancels any opt in to promotional or marketing emails associated to those alerts.
                                 </p>
                                 <p>
-                                    We use cookies only where necessary for the functionality of this website, or as part of our analytics tools.
+                                    We use cookies only where necessary for the functionality of this website, or as part of our analytics tools and do not use them to capture or store sensitive data.
                                 </p>
                                 <p>
                                     Any changes to this privacy policy will be published here with an effective date no earlier than seven (7) days after the date they are published.
                                 </p>
                                 <p>
-                                    This policy is effective from 7 January 2022.
+                                    This policy is effective from 2 October 2025. For questions or concerns please contact privacy@solstrategies.io.
                                 </p>
                             <h3>
                                 Terms of Use
