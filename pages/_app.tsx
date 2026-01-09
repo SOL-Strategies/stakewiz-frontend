@@ -50,7 +50,7 @@ const Stakewiz: FC<AppProps> = ({ Component, pageProps }) => {
                 metadata: {
                     name: 'Stakewiz by SOL Strategies',
                     description: 'Validator Analytics and Staking',
-                    url: 'https://stakewiz.com',
+                    url: 'https://staging.stakewiz.com',
                     icons: ['https://stakewiz.com/images/favicon-new.png']
                 },
             },
