@@ -9,12 +9,14 @@ import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import {
     PhantomWalletAdapter,
     SolflareWalletAdapter,
+    WalletConnectWalletAdapter
 } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
 import { AppProps } from 'next/app';
 import { FC, useMemo,  useEffect, useState, useContext } from 'react';
 import { ValidatorContext } from '../components/validator/validatorhook';
 import { ValidatorData } from '../components/common';
+import config from '../config.json';
 
 require('@solana/wallet-adapter-react-ui/styles.css');
 require('bootstrap/dist/css/bootstrap.css');
@@ -39,7 +41,20 @@ const Stakewiz: FC<AppProps> = ({ Component, pageProps }) => {
   const wallets = useMemo(
       () => [
           new PhantomWalletAdapter(),
-          new SolflareWalletAdapter({ network })
+          new SolflareWalletAdapter({ network }),
+          new WalletConnectWalletAdapter({
+            network: network,
+            options: {
+                relayUrl: 'wss://relay.walletconnect.com',
+                projectId: config.WALLET_CONNECT_APP_ID,
+                metadata: {
+                    name: 'Stakewiz by SOL Strategies',
+                    description: 'Validator Analytics and Staking',
+                    url: 'https://stakewiz.com',
+                    icons: ['https://stakewiz.com/images/favicon-new.png']
+                },
+            },
+          })
       ],
       [network]
   );
