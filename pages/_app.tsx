@@ -9,6 +9,7 @@ import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import {
     PhantomWalletAdapter,
     SolflareWalletAdapter,
+    WalletConnectWalletAdapter
 } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
 import { AppProps } from 'next/app';
@@ -31,6 +32,7 @@ const Stakewiz: FC<AppProps> = ({ Component, pageProps }) => {
   // You can also provide a custom RPC endpoint
   //const endpoint = useMemo(() => clusterApiUrl(network), [network]);
   const endpoint = process.env.RPC_URL;
+  const wallet_connect_app_id = process.env.WALLET_CONNECT_APP_ID;
   
 
   // @solana/wallet-adapter-wallets includes all the adapters but supports tree shaking and lazy loading --
@@ -39,7 +41,20 @@ const Stakewiz: FC<AppProps> = ({ Component, pageProps }) => {
   const wallets = useMemo(
       () => [
           new PhantomWalletAdapter(),
-          new SolflareWalletAdapter({ network })
+          new SolflareWalletAdapter({ network }),
+          new WalletConnectWalletAdapter({
+            network: network,
+            options: {
+                relayUrl: 'wss://relay.walletconnect.com',
+                projectId: wallet_connect_app_id,
+                metadata: {
+                    name: 'Stakewiz by SOL Strategies',
+                    description: 'Validator Analytics and Staking',
+                    url: 'https://stakewiz.com',
+                    icons: ['https://stakewiz.com/images/favicon-new.png']
+                },
+            },
+          })
       ],
       [network]
   );

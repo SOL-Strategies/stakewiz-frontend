@@ -327,7 +327,6 @@ class WizScoreBody extends React.Component<{
                         </table>
                         {this.renderCommissionAlert()}
                         {this.renderNoVotingAlert()}
-                        {this.renderTPUIPAlert()}
                         {this.renderWizScore()}
                     </div>
         );
