@@ -579,8 +579,8 @@ class WizScoreWeightings extends React.Component<{},
                                     {this.state.weightings.stake_weight_weight}
                                 </td>
                                 <td>
-                                    The weighting given to validator&apos;s stake. We give the highest score to the average stake weight, with a linear drop off below to 0 and above to the threshold value.
-                                    <br /><br />If the average stake is 200,000 SOL a validator with 100,000 stake will earn 50% of the stake weight weight. A validator with 500,000 SOL stake will earn (500,000 - 200,000) / (1,500,000 - 200,000) * stake weight weight.
+                                    The weighting given to validator&apos;s stake. We give the highest score to the median stake weight (as of score version 67, prior to that we used the average), with a linear drop off below to 0 and above to the threshold value.
+                                    <br /><br />If the median stake is 200,000 SOL a validator with 100,000 stake will earn 50% of the stake weight weight. A validator with 500,000 SOL stake will earn (500,000 - 200,000) / (1,500,000 - 200,000) * stake weight weight.
                                 </td>
                             </tr>
                             <tr> 
