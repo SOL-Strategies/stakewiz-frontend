@@ -83,6 +83,7 @@ export interface validatorI {
 export interface clusterStatsI {
     avg_credit_ratio: number;
     avg_activated_stake: number;
+    median_stake: number;
     avg_commission: number;
     avg_skip_rate: number;
     avg_apy: number;
