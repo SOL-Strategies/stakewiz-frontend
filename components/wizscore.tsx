@@ -63,7 +63,7 @@ class WizScoreBody extends React.Component<{
 {}> {
     
     renderInfoCount() {
-        return (this.props.validator.info_score / 2)
+        return (this.props.validator.info_score)
     }
 
     renderWithdrawAuthorityValue() {
