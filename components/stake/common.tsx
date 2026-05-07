@@ -6,7 +6,6 @@ import config from '../../config.json';
 import axios from 'axios';
 import { CommissionHistoryI, JitoCommissionHistoryI } from './interfaces'
 
-const API_URL = process.env.API_BASE_URL;
 
 export const getStakeAccounts = async (pubkey,connection: Connection) => {
 
@@ -32,9 +31,7 @@ export const getStakeAccounts = async (pubkey,connection: Connection) => {
 export const getCommissionHistory = async (vote_identity):Promise<CommissionHistoryI[]> => {
     
     try {
-      let response = await axios(API_URL+config.API_ENDPOINTS.commission_history+'/'+vote_identity, {
-        headers: {'Content-Type':'application/json'}
-      })
+      let response = await axios('/api/v2/validator/'+vote_identity+'/commission_history')
       let json = response.data;
   
       return json
@@ -48,9 +45,7 @@ export const getCommissionHistory = async (vote_identity):Promise<CommissionHist
 export const getJitoCommissionHistory = async (vote_identity):Promise<JitoCommissionHistoryI[]> => {
 
     try {
-        let response = await axios(API_URL+config.API_ENDPOINTS.jito_commission_history+'/'+vote_identity, {
-        headers: {'Content-Type':'application/json'}
-        })
+        let response = await axios('/api/v2/validator/'+vote_identity+'/jito_commission_history')
         let json = response.data;
 
         return json

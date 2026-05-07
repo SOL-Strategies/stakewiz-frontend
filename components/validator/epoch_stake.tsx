@@ -1,46 +1,45 @@
 import { FC, useEffect, useState } from "react";
 import axios from "axios";
-import config from '../../config.json'
 import { Spinner } from '../common'
 import Chart from "react-google-charts";
 
-const API_URL = process.env.API_BASE_URL;
 
 export const EpochStakeChart: FC<{vote_identity: string, updateStake: Function}> = ({vote_identity, updateStake}) => {
     const [stakes, setStakes] = useState(null);
     
     useEffect(() => {
-        axios(API_URL+config.API_ENDPOINTS.validator_epoch_stake_accounts+"/"+vote_identity, {
-            headers: {'Content-Type':'application/json'}
-        })
+        axios('/api/v2/validator/'+vote_identity+'/epoch_stake_accounts')
             .then(response => {
-                
+
                 let json = response.data;
 
-                let change = json.activating.amount-json.deactivating.amount;
-                
+                const SOL = 1e9;
+                let change = parseFloat(json.activating.amount_lamports)/SOL - parseFloat(json.deactivating.amount_lamports)/SOL;
+
                 updateStake(change);
-                
+
                 let stakes = [];
                 stakes.push(['Location','Parent','Value (SOL)','Color value']);
                 stakes.push(['Total Epoch Stake Changes',null,0,0]);
                 stakes.push(['Activating','Total Epoch Stake Changes',0,0]);
                 stakes.push(['Deactivating','Total Epoch Stake Changes', 0,0]);
-                
+
                 json.activating.stake_accounts.map((stake) => {
+                    const sol = parseFloat(stake.delegated_amount_lamports)/SOL;
                     stakes.push([
                         stake.pubkey,
                         'Activating',
-                        parseFloat(stake.delegated_amount),
-                        Math.sqrt(parseFloat(stake.delegated_amount))
+                        sol,
+                        Math.sqrt(sol)
                     ])
                 })
                 json.deactivating.stake_accounts.map((stake) => {
+                    const sol = parseFloat(stake.delegated_amount_lamports)/SOL;
                     stakes.push([
                         stake.pubkey,
                         'Deactivating',
-                        parseFloat(stake.delegated_amount),
-                        Math.sqrt(parseFloat(stake.delegated_amount))*-1
+                        sol,
+                        Math.sqrt(sol)*-1
                     ])
                 })
 

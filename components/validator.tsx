@@ -14,7 +14,6 @@ import { ValidatorContext } from './validator/validatorhook'
 import ordinal from 'ordinal'
 import WizEmblem from '../public/images/emblem.svg'
 
-const API_URL = process.env.API_BASE_URL;
 
 class ValidatorListing extends React.Component<ValidatorListingI, {}> {
     constructor(props, context ) {
@@ -50,9 +49,7 @@ class ValidatorListing extends React.Component<ValidatorListingI, {}> {
     }
 
     getWalletValidators(pubkey) {
-      axios(API_URL+config.API_ENDPOINTS.wallet_validators+'/'+pubkey, {
-          headers: {'Content-Type':'application/json'}
-      })
+      axios('/api/v2/stake/by_withdraw_authority/'+pubkey)
         .then(response => {
           let json = response.data;
           

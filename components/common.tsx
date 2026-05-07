@@ -232,14 +232,10 @@ const checkSolflareEnabled = async (pubkey: string): Promise<boolean> => {
 const getEpochInfo = async (): Promise<Object> => {
 
   
-  let result = await axios(API_URL+config.API_ENDPOINTS.epoch_info, {
-      headers: {'Content-Type':'application/json'}
-  })
+  let result = await axios('/api/v2/epoch/info')
     .then(response => {
       if(response.status==200) return response.data;
       else return false;
-
-      
     })
     .catch(e => {
       console.log(e);
@@ -252,14 +248,10 @@ const getEpochInfo = async (): Promise<Object> => {
 const getAllEpochHistory = async (): Promise<Object> => {
 
   
-  let result = await axios(API_URL+config.API_ENDPOINTS.all_epoch_history, {
-      headers: {'Content-Type':'application/json'}
-  })
+  let result = await axios('/api/v2/epoch/history')
     .then(response => {
       if(response.status==200) return response.data;
       else return false;
-
-      
     })
     .catch(e => {
       console.log(e);
@@ -272,10 +264,8 @@ const getAllEpochHistory = async (): Promise<Object> => {
 const ValidatorData = async() => {
 
   return await new Promise((resolve, reject) => {
-    axios(API_URL+config.API_ENDPOINTS.validators, {
-    headers: {'Content-Type':'application/json'}
-    }).then(response => {
-      resolve(response.data);
+    axios('/api/v2/validators/').then(response => {
+      resolve(response.data.data);
     })
     .catch(error => {
       reject(error);
@@ -287,9 +277,7 @@ const ValidatorData = async() => {
 const WalletValidators = async(pubkey) => {
 
   return await new Promise((resolve, reject) => {
-    axios(API_URL+config.API_ENDPOINTS.wallet_validators+'/'+pubkey, {
-    headers: {'Content-Type':'application/json'}
-    }).then(response => {
+    axios('/api/v2/stake/by_withdraw_authority/'+pubkey).then(response => {
       resolve(response.data);
     })
     .catch(error => {
@@ -301,14 +289,10 @@ const WalletValidators = async(pubkey) => {
 };
 
 export const getClusterStats = async ():Promise<clusterStatsI> => {
-    
-  try {
-    let response = await axios(API_URL+config.API_ENDPOINTS.cluster_stats, {
-      headers: {'Content-Type':'application/json'}
-    })
-    let json = response.data;
 
-    return json
+  try {
+    let response = await axios('/api/v2/cluster_stats')
+    return response.data;
    }
    catch(e) {
       console.log(e);

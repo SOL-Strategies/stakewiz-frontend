@@ -1,19 +1,15 @@
 import { FC, useEffect, useState } from "react";
 import axios from "axios";
-import config from '../../config.json'
 import { Spinner } from '../common'
 import Chart from "react-google-charts";
 import * as browser from 'lib/browser';
 
-const API_URL = process.env.API_BASE_URL;
 
 export const SkipRateChart: FC<{vote_identity: string}> = ({vote_identity}) => {
     const [allScores, setAllScores] = useState(null);
     
     useEffect(() => {
-        axios(API_URL+config.API_ENDPOINTS.validator_skip_rate+"/"+vote_identity+"?limit=2000", {
-            headers: {'Content-Type':'application/json'}
-        })
+        axios('/api/v2/validator/'+vote_identity+'/skip_rate?limit=2000')
             .then(response => {
             let json = response.data;
 
