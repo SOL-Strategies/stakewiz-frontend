@@ -14,7 +14,7 @@ export const EpochStakeChart: FC<{vote_identity: string, updateStake: Function}>
                 let json = response.data;
 
                 const SOL = 1e9;
-                let change = json.activating.amount_lamports/SOL - json.deactivating.amount_lamports/SOL;
+                let change = (json.activating?.amount_lamports ?? 0)/SOL - (json.deactivating?.amount_lamports ?? 0)/SOL;
 
                 updateStake(change);
 

@@ -6,7 +6,7 @@ import { OverlayTrigger, Tooltip } from "react-bootstrap";
 
 export const StakeLabel: FC<{stake: number}> = ({stake}) => {
     
-    if(stake!=null) {
+    if(stake != null && !isNaN(stake) && stake !== 0) {
         let s = (stake<0) ? stake*-1 : stake;
         let n = new Intl.NumberFormat().format(Number(s.toFixed(0)));
         let color = (stake<0) ? 'bg-danger' : 'bg-white text-black'
