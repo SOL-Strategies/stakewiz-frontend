@@ -263,14 +263,18 @@ const getAllEpochHistory = async (): Promise<Object> => {
 
 const ValidatorData = async() => {
 
-  return await new Promise((resolve, reject) => {
-    axios('/api/v2/validators/').then(response => {
-      resolve(response.data.data);
-    })
-    .catch(error => {
-      reject(error);
-    });
-  });
+  const all: any[] = [];
+  let cursor: string | null = null;
+
+  do {
+    const url = '/api/v2/validators/?limit=1000' + (cursor ? '&cursor=' + encodeURIComponent(cursor) : '');
+    const response = await axios(url);
+    const { data, next_cursor } = response.data;
+    all.push(...data);
+    cursor = next_cursor;
+  } while (cursor);
+
+  return all;
 
 };
 
