@@ -275,7 +275,7 @@ class ValidatorDetail extends React.Component<validatorDetailI,
 
             let updated_at = new Date(this.state.validator.updated_at);
 
-            let activated_stake = new Intl.NumberFormat().format(Number(this.state.validator.activated_stake.toFixed(0)));
+            let activated_stake = new Intl.NumberFormat().format(Math.round(Number(this.state.validator.activated_stake) / 1e9));
 
             return ( [
                 <div className='container-sm m-1 position-relative d-flex align-items-center validator-detail-header' key='validator-details-header'>

@@ -36,7 +36,7 @@ const ValidatorList: React.FC<ValidatorListProps> = ({ validators, onValidatorCl
                 <div className="text-center">
                   <h6 className="mb-1">Score</h6>
                   <Badge bg="primary" className="fs-6">
-                    {validator.wiz_score?.toFixed(2) || 'N/A'}
+                    {validator.wiz_score != null ? Number(validator.wiz_score).toFixed(2) : 'N/A'}
                   </Badge>
                 </div>
               </Col>
