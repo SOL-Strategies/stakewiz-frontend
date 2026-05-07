@@ -44,8 +44,8 @@ const ValidatorList: React.FC<ValidatorListProps> = ({ validators, onValidatorCl
                 <div className="text-center">
                   <h6 className="mb-1">Stake</h6>
                   <p className="mb-0 text-primary">
-                    {validator.activated_stake ? 
-                      `${(validator.activated_stake / 1e9).toLocaleString()} SOL` : 
+                    {validator.activated_stake ?
+                      `${Number(validator.activated_stake).toLocaleString()} SOL` :
                       'N/A'}
                   </p>
                 </div>

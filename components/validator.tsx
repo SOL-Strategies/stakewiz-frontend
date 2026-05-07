@@ -307,19 +307,19 @@ const ValidatorBox: FC<ValidatorBoxPropsI> = ({validator,clusterStats,showWizMod
 
         let stakeText, stakeColor, stakeBg, stakeWidth;
         if(validator.stake_ratio > config.STAKE_CATEGORIES.HIGH) {
-            stakeText = 'High Stake: ◎ '+new Intl.NumberFormat().format(Math.round(Number(validator.activated_stake) / 1e9));
+            stakeText = 'High Stake: ◎ '+new Intl.NumberFormat().format(Math.round(Number(validator.activated_stake)));
             stakeColor = 'text-danger';
             stakeBg = 'bg-danger';
             stakeWidth = 100;
         }
         else if(validator.stake_ratio > config.STAKE_CATEGORIES.MEDIUM) {
-            stakeText = 'Medium Stake: ◎ '+new Intl.NumberFormat().format(Math.round(Number(validator.activated_stake) / 1e9));
+            stakeText = 'Medium Stake: ◎ '+new Intl.NumberFormat().format(Math.round(Number(validator.activated_stake)));
             stakeColor = 'text-warning';
             stakeBg = 'bg-warning';
             stakeWidth = validator.stake_ratio*1000;
         }
         else {
-            stakeText = 'Low Stake: ◎ '+new Intl.NumberFormat().format(Math.round(Number(validator.activated_stake) / 1e9)); 
+            stakeText = 'Low Stake: ◎ '+new Intl.NumberFormat().format(Math.round(Number(validator.activated_stake))); 
             stakeColor = 'text-success';
             stakeBg = 'bg-success';
             stakeWidth = validator.stake_ratio*1000;

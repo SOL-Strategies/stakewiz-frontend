@@ -8,8 +8,8 @@ export interface ApiError {
 
 export interface ClusterStats {
   avg_credit_ratio: number | null;
-  avg_activated_stake_lamports: string;
-  median_stake_lamports: string;
+  avg_activated_stake_lamports: number | null;
+  median_stake_lamports: number | null;
   avg_commission: number | null;
   avg_skip_rate: number | null;
   avg_apy: number | null;
@@ -66,8 +66,8 @@ export interface SkipRatePoint {
 }
 
 export interface LogEntry {
-  old_data: string | null;
-  new_data: string | null;
+  old_data: Record<string, unknown> | null;
+  new_data: Record<string, unknown> | null;
   created_at: string;
 }
 
@@ -98,13 +98,13 @@ export interface EpochStakes {
 
 export interface StakeAccount {
   pubkey: string;
-  delegated_amount_lamports: string;
+  delegated_amount_lamports: number | null;
   activation_epoch: number | null;
   deactivation_epoch: number | null;
 }
 
 export interface EpochStakeAccountsGroup {
-  amount_lamports: string;
+  amount_lamports: number;
   count: number;
   stake_accounts: StakeAccount[];
 }

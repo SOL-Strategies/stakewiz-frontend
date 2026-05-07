@@ -14,7 +14,7 @@ export const EpochStakeChart: FC<{vote_identity: string, updateStake: Function}>
                 let json = response.data;
 
                 const SOL = 1e9;
-                let change = parseFloat(json.activating.amount_lamports)/SOL - parseFloat(json.deactivating.amount_lamports)/SOL;
+                let change = json.activating.amount_lamports/SOL - json.deactivating.amount_lamports/SOL;
 
                 updateStake(change);
 
@@ -25,7 +25,7 @@ export const EpochStakeChart: FC<{vote_identity: string, updateStake: Function}>
                 stakes.push(['Deactivating','Total Epoch Stake Changes', 0,0]);
 
                 json.activating.stake_accounts.map((stake) => {
-                    const sol = parseFloat(stake.delegated_amount_lamports)/SOL;
+                    const sol = (stake.delegated_amount_lamports ?? 0)/SOL;
                     stakes.push([
                         stake.pubkey,
                         'Activating',
@@ -34,7 +34,7 @@ export const EpochStakeChart: FC<{vote_identity: string, updateStake: Function}>
                     ])
                 })
                 json.deactivating.stake_accounts.map((stake) => {
-                    const sol = parseFloat(stake.delegated_amount_lamports)/SOL;
+                    const sol = (stake.delegated_amount_lamports ?? 0)/SOL;
                     stakes.push([
                         stake.pubkey,
                         'Deactivating',
