@@ -223,7 +223,7 @@ export const MultiStakeDialog: FC<{
                                 APY {validator.total_apy} %
                             </div>
                             <div className='badge bg-light text-dark ms-1'>
-                                Comm {validator.commission} %
+                                Comm {validator.commission/100} %
                             </div>
                             <div className='badge bg-light text-dark ms-1'>
                                 <span className='wiz-font me-2'>Wiz</span> {validator.wiz_score} %
@@ -273,7 +273,7 @@ export const MultiStakeDialog: FC<{
                                 APY {laine.total_apy} %
                             </div>
                             <div className='badge bg-light text-dark ms-1'>
-                                Comm {laine.commission} %
+                                Comm {laine.commission/100} %
                             </div>
                             <div className='badge bg-light text-dark ms-1'>
                                 <span className='wiz-font me-2'>Wiz</span> {laine.wiz_score} %

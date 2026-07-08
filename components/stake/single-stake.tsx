@@ -256,8 +256,8 @@ export const StakeDialog: FC<{
                             </div>
                         </div>
                         <div className='col'>
-                            <div className={(validator.commission<10) ? null : 'text-danger'}>
-                                {validator.commission} %
+                            <div className={(validator.commission<1000) ? null : 'text-danger'}>
+                                {validator.commission/100} %
                             </div>
                             <div>
                                 Commission
