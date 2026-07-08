@@ -722,7 +722,7 @@ export const Stakes: FC<{userPubkey: PublicKey, connection: Connection, connecte
                                 >
                                     <div className='bg-wizlight rounded text-center flex-grow-1 m-1'>
                                         <div className='p-2'>
-                                            {delegateValidator.commission}%
+                                            {delegateValidator.commission/100}%
                                         </div>
                                         <div>
                                             
@@ -730,7 +730,7 @@ export const Stakes: FC<{userPubkey: PublicKey, connection: Connection, connecte
                                             
                                         </div>
                                         <div className="progress bg-semidark" style={{height: '2px'}}>                        
-                                            <div className={(delegateValidator.commission<=10) ? "progress-bar bg-warning" : "progress-bar bg-danger"} role="progressbar" aria-valuenow={delegateValidator.commission} aria-valuemin={0} aria-valuemax={10} style={{width: delegateValidator.commission*10+'%'}}>
+                                            <div className={(delegateValidator.commission<=1000) ? "progress-bar bg-warning" : "progress-bar bg-danger"} role="progressbar" aria-valuenow={delegateValidator.commission} aria-valuemin={0} aria-valuemax={1000} style={{width: delegateValidator.commission/10+'%'}}>
                                             </div>                    
                                         </div>  
                                     </div>

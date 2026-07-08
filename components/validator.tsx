@@ -555,7 +555,7 @@ const ValidatorBox: FC<ValidatorBoxPropsI> = ({validator,clusterStats,showWizMod
                 >
                     <div className={'bg-wizlight rounded text-center flex-grow-1 m-1'+(showListView?' w-70':'')}>
                         <div className='p-2'>
-                            {validator.commission}%
+                            {validator.commission/100}%
                         </div>
                         <div>
                             
@@ -563,7 +563,7 @@ const ValidatorBox: FC<ValidatorBoxPropsI> = ({validator,clusterStats,showWizMod
                             
                         </div>
                         <div className="progress bg-semidark" style={{height: '2px'}}>                        
-                            <div className={(validator.commission<=10) ? "progress-bar bg-warning" : "progress-bar bg-danger"} role="progressbar" aria-valuenow={validator.commission} aria-valuemin={0} aria-valuemax={10} style={{width: validator.commission*10+'%'}}>
+                            <div className={(validator.commission<=1000) ? "progress-bar bg-warning" : "progress-bar bg-danger"} role="progressbar" aria-valuenow={validator.commission} aria-valuemin={0} aria-valuemax={1000} style={{width: validator.commission/10+'%'}}>
                             </div>                    
                         </div>  
                     </div>

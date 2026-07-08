@@ -85,10 +85,10 @@ class WizScoreBody extends React.Component<{
     }
 
     renderCommissionAlert() {
-        if(this.props.validator.commission>10) {
+        if(this.props.validator.commission>1000) {
             return (
                 <div className="bg-danger text-white p-2 m-2 text-center">
-                    Validator&apos;s commission is above 10%. We override their score to 0%.
+                    Validator&apos;s commission is above 7%. We override their score to 0%.
                 </div>
             );
         }
@@ -215,8 +215,8 @@ class WizScoreBody extends React.Component<{
                                 /> 
                                 <WizScoreRow
                                     label='Commission'
-                                    tooltip="Up to +5% score for commission of 0%. No score for 10% commission and above."
-                                    value={this.props.validator.commission+'%'}
+                                    tooltip="Up to +5% score for commission of 0%. No score for 7% commission and above."
+                                    value={this.props.validator.commission/100+'%'}
                                     score={this.props.validator.commission_score}
                                     addPercent={true}
                                     threshold='0'
