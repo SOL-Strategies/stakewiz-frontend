@@ -78,6 +78,7 @@ export interface validatorI {
     staking_apy: number;
     jito_apy?: number;
     total_apy: number;
+    bls_pubkey: string;
 };
 
 export interface clusterStatsI {

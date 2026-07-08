@@ -329,6 +329,11 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                             <span className='fw-bold mx-2'>Admin Comment:</span> {this.state.validator.admin_comment}
                         </div>
                     : null }
+                    {(this.state.validator.bls_pubkey==null) ?
+                        <div className='d-flex p-1 border border-warning rounded m-2 text-light'>
+                            <span className='fw-bold mx-2'>Warning to operator:</span> Your vote account has not set a BLS Pubkey. Your validator may be excluded from consensus in the future if not set, check Solana Tech Discord for instructions! 
+                        </div>
+                    : null }
                     <div className='d-flex flex-column p-2 text-white position-relative validator-detail-box m-1'>
                         
                         <div className='validator-detail-flex-opacity-bg'></div>
@@ -438,7 +443,7 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                                             Commission
                                         </div>
                                         <div className='col d-flex align-items-center'>
-                                            {this.state.validator.commission} %
+                                            {this.state.validator.commission/100} %
                                             {this.renderJitoCommissionLabel()}
                                         </div>
                                     </div>
