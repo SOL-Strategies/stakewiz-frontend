@@ -438,7 +438,7 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                                             Commission
                                         </div>
                                         <div className='col d-flex align-items-center'>
-                                            {this.state.validator.commission} %
+                                            {this.state.validator.commission/100} %
                                             {this.renderJitoCommissionLabel()}
                                         </div>
                                     </div>
