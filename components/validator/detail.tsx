@@ -162,7 +162,7 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                     formatted_date = new Date(event.observed_at)
                 }
 
-                let prev_comm = (this.state.commissionHistory!==null && i+1 < this.state.commissionHistory.length) ? this.state.commissionHistory[i+1].commission+' %' : 'N/A'
+                let prev_comm = (this.state.commissionHistory!==null && i+1 < this.state.commissionHistory.length) ? this.state.commissionHistory[i+1].commission/100+' %' : 'N/A'
 
                 let row = (
                     <tr key={'commission-history-row-'+i}>
@@ -173,7 +173,7 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                             {prev_comm}
                         </td>
                         <td>
-                            {event.commission} %
+                            {event.commission/100} %
                         </td>
                     </tr>
                 )
