@@ -157,7 +157,7 @@ export default function Home() {
                                     How can I submit feedback or get in touch?
                                 </h3>
                                 <p>
-                                    You can find us on Twitter at <a href="https://twitter.com/laine_sa_" target="_new">@laine_sa_</a> or <a href="https://discord.gg/3JXdTavv6x" target="_new">join our Discord</a>. 
+                                    You can find us on Twitter at <a href="https://twitter.com/laine_sa_" target="_new">@laine_sa_</a> or <a href="https://discord.gg/4qUCTsX9QV" target="_new">join our Discord</a>. 
                                 </p>
                                 <hr className="m-3 my-5" />
                                 <h3 className="mb-4" id="faq-wizscore">
