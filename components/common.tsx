@@ -137,7 +137,7 @@ const TopBar: FC = () => {
                 <Nav.Link href="/stakes" className='text-white'>My Stakes</Nav.Link>
                 <Nav.Link href="/faq" className='text-white'>FAQs</Nav.Link>
                 <Nav.Link href="/validator/GE6atKoWiQ2pt3zL7N13pjNHjdLVys8LinG8qeJLcAiL" target="_new" className='text-warning fw-bold'>Stake with us</Nav.Link>
-                <a href="https://discord.com/invite/solstrategies" target="_new" className='text-white me-2 nav-discord'>
+                <a href="https://discord.gg/4qUCTsX9QV" target="_new" className='text-white me-2 nav-discord'>
                   <i className="bi bi-discord p-2 pointer"></i>
                   <span className='d-none'>Join Discord</span> 
                 </a>
@@ -176,7 +176,7 @@ class Footer extends React.Component {
                 </Link>
                 </div>
                 <div className="col social-icons">
-                <a href="https://discord.gg/3JXdTavv6x" target="_new"><i className="bi bi-discord p-2 pointer"></i></a>
+                <a href="https://discord.gg/4qUCTsX9QV" target="_new"><i className="bi bi-discord p-2 pointer"></i></a>
                 <a href="https://twitter.com/laine_sa_" target="_new"><i className="bi bi-twitter p-2 pointer"></i></a>
                 </div>
                 <div className="col"> 
