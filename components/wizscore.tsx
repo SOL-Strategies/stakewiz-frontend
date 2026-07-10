@@ -10,7 +10,6 @@ import * as browser from 'lib/browser';
 import WizEmblem from '../public/images/emblem.svg'
 import ordinal from 'ordinal';
 
-const API_URL = process.env.API_BASE_URL;
 
 function WizScoreRow(props) {
 
@@ -393,9 +392,7 @@ class WizScoreWeightings extends React.Component<{},
     }
 
     getWeightings() {
-        axios(API_URL+config.API_ENDPOINTS.weightings, {
-            headers: {'Content-Type':'application/json'}
-        })
+        axios('/api/v2/wiz_score')
             .then(response => {
             let json = response.data;
             
@@ -699,9 +696,7 @@ class WizScoreChart extends React.Component<{
     }    
 
     getWizScores(vote_identity) {
-        axios(API_URL+config.API_ENDPOINTS.validator_wiz_scores+"/"+vote_identity, {
-          headers: {'Content-Type':'application/json'}
-        })
+        axios('/api/v2/validator/'+vote_identity+'/wiz_scores')
           .then(response => {
             let json = response.data;
             

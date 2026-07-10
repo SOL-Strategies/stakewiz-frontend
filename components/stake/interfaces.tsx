@@ -6,5 +6,5 @@ export interface CommissionHistoryI {
 
 export interface JitoCommissionHistoryI {
     commission_bps: number;
-    created_at: string;
+    observed_at: string;
 }

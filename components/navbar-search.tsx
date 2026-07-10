@@ -5,7 +5,6 @@ import { ValidatorContext } from './validator/validatorhook'
 import { useRouter } from 'next/router'
 const ordinal = require ('ordinal');
 
-const API_URL = process.env.API_BASE_URL;
 
 interface ValidatorData {
   name: string;

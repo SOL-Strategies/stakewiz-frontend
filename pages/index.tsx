@@ -9,7 +9,6 @@ import { useWallet, useConnection } from '@solana/wallet-adapter-react'
 import { checkSolflareEnabled } from '../components/common'
 import { Connection } from '@solana/web3.js'
 
-const API_URL = process.env.API_BASE_URL;
 
 class Homepage extends React.Component<
   {
