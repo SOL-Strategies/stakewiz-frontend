@@ -1,12 +1,12 @@
 import React, { FC, useContext, useEffect, useState } from "react";
 import config from '../../config.json';
-import { ComputeBudgetProgram, Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { BlockhashWithExpiryBlockHeight, ComputeBudgetProgram, Connection, LAMPORTS_PER_SOL, PublicKey, VersionedTransaction } from '@solana/web3.js';
 import { getStakeAccounts, StakeStatus, getStakeStatus, getRewards } from './common';
 import { ValidatorContext } from '../validator/validatorhook';
 import { getAllEpochHistory, getClusterStats, Spinner} from '../common'
 import { RenderImage, RenderName } from '../validator/common'
 import { Alert, Form, InputGroup, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
-import { addMeta, closeStake, deactivateStake, delegateStake } from "./transactions";
+import { buildVersionedTx, closeStake, deactivateStake, delegateStake } from "./transactions";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { validatorI } from "components/validator/interfaces";
 import ordinal from "ordinal";
@@ -398,7 +398,7 @@ export const Stakes: FC<{userPubkey: PublicKey, connection: Connection, connecte
         }, 5000)
     }
 
-    const submitTx = async (tx, stake, isClose:Boolean = false, type = 'none', value = 0) => {
+    const submitTx = async (tx: VersionedTransaction, blockhash: BlockhashWithExpiryBlockHeight, stake, isClose:Boolean = false, type = 'none', value = 0) => {
 
         console.log(tx)
 
@@ -417,8 +417,6 @@ export const Stakes: FC<{userPubkey: PublicKey, connection: Connection, connecte
         setUpdatingStakes(updatingStakes => [...updatingStakes, stake])
         setDelegatingStake(null)
         setDelegateValidator(null)
-
-        let blockhash = await connection.getLatestBlockhash()
 
         connection.confirmTransaction({
             signature: signature, 
@@ -487,12 +485,10 @@ export const Stakes: FC<{userPubkey: PublicKey, connection: Connection, connecte
         
         try {
 
-            let tx = deactivateStake(activePubkey,stake.pubkey)
+            let [tx, blockhash] = await buildVersionedTx(deactivateStake(activePubkey,stake.pubkey).instructions, activePubkey, connection)
 
-            tx = await addMeta(tx,activePubkey,connection)
-    
             let signedTx = await signTransaction(tx)
-            await submitTx(signedTx,stake,false,'deactivate',stake.account.lamports)
+            await submitTx(signedTx,blockhash,stake,false,'deactivate',stake.account.lamports)
     
         }
         catch(e) {
@@ -508,12 +504,10 @@ export const Stakes: FC<{userPubkey: PublicKey, connection: Connection, connecte
         setAwaitingSignature(true)
         
         try {
-            let tx = closeStake(activePubkey, stake.pubkey, stake.account.lamports)
-
-            tx = await addMeta(tx,activePubkey,connection)
+            let [tx, blockhash] = await buildVersionedTx(closeStake(activePubkey, stake.pubkey, stake.account.lamports).instructions, activePubkey, connection)
 
             let signedTx = await signTransaction(tx)
-            await submitTx(signedTx,stake,true,'close',stake.account.lamports)
+            await submitTx(signedTx,blockhash,stake,true,'close',stake.account.lamports)
         }
         catch(e) {
             console.log(e.message)
@@ -529,12 +523,10 @@ export const Stakes: FC<{userPubkey: PublicKey, connection: Connection, connecte
         try {
             let votePubkey = new PublicKey(vote_identity)
 
-            let tx = delegateStake(activePubkey, stake.pubkey, votePubkey)
-
-            tx = await addMeta(tx,activePubkey,connection)
+            let [tx, blockhash] = await buildVersionedTx(delegateStake(activePubkey, stake.pubkey, votePubkey).instructions, activePubkey, connection)
 
             let signedTx = await signTransaction(tx)
-            await submitTx(signedTx,stake,false,'delegate',stake.account.lamports)
+            await submitTx(signedTx,blockhash,stake,false,'delegate',stake.account.lamports)
         }
         catch(e) {
             console.log(e.message)

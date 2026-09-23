@@ -8,7 +8,7 @@ import RangeSlider from 'react-bootstrap-range-slider'
 import { RenderImage, RenderName } from '../validator/common';
 import { getEpochInfo, Spinner } from '../common';
 import { getStakeAccounts, StakeInput, DistributionMethods } from './common'
-import { addMeta, createStake } from './transactions'
+import { buildVersionedTx, createStake } from './transactions'
 
 import * as gtag from '../../lib/gtag.js'
 
@@ -369,46 +369,27 @@ export const MultiStakeDialog: FC<{
 
         try {
             
-            let txs = [];
-            let signers = [];
-            let recentBlockhash = await connection.getLatestBlockhash();
+            // Two validators (create + initialize + delegate each) per transaction to stay under the size limit
+            const VALIDATORS_PER_TX = 2;
+            let transactions = [];
+            let blockhashes = [];
 
-            stakeValidators.map((validator) => {
+            for(let i = 0; i < stakeValidators.length; i += VALIDATORS_PER_TX) {
+                let instructions = [];
+                let signers = [];
 
-                let [stakeTx, delegateIx, stakeKeys] = createStake(publicKey, validator, stakeDistribution[validator.vote_identity])
-
-                txs.push(stakeTx);
-                txs.push(delegateIx);
-                signers.push(stakeKeys);
-            })
-
-            const buildTxs = async (txs) => {
-                let transactions = [];
-                let i = 0
-                for(const tx of txs) {
-                    let y = Math.floor(i / 4);
-                
-                    if(transactions[y]==undefined) {
-                        transactions[y] = new Transaction();
-                        transactions[y] = await addMeta(transactions[y],publicKey,connection)
-                        
-                    }
-    
-                    transactions[y].add(tx);
-                    i++
+                for(const validator of stakeValidators.slice(i, i + VALIDATORS_PER_TX)) {
+                    let [stakeTx, delegateIx, stakeKeys] = createStake(publicKey, validator, stakeDistribution[validator.vote_identity])
+                    instructions.push(...stakeTx.instructions, ...delegateIx.instructions);
+                    signers.push(stakeKeys);
                 }
 
-                return transactions
-                
+                let [versionedTx, blockhash] = await buildVersionedTx(instructions, publicKey, connection)
+                versionedTx.sign(signers);
+                transactions.push(versionedTx);
+                blockhashes.push(blockhash);
             }
 
-            const transactions = await buildTxs(txs)
-
-            signers.map((keypair, i) => {
-                let y = Math.floor(i / 2);
-
-                transactions[y].partialSign(keypair);
-            })
             let signedTx = await signAllTransactions(transactions);
             setSigned(true);
             let sigs = []
@@ -435,8 +416,8 @@ export const MultiStakeDialog: FC<{
             for(let i = 0; i < sigs.length; i++) {
                 let confirmation = await connection.confirmTransaction({
                     signature: sigs[i], 
-                    blockhash: recentBlockhash.blockhash, 
-                    lastValidBlockHeight: recentBlockhash.lastValidBlockHeight}, 
+                    blockhash: blockhashes[i].blockhash, 
+                    lastValidBlockHeight: blockhashes[i].lastValidBlockHeight}, 
                     'confirmed'
                 )
                 if(confirmation.value.err==null) confs.push(sigs[i])

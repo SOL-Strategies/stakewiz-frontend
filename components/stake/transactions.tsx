@@ -1,22 +1,22 @@
-import { useConnection } from "@solana/wallet-adapter-react";
-import { Authorized, ComputeBudgetProgram, Connection, Keypair, PublicKey, StakeProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Authorized, BlockhashWithExpiryBlockHeight, ComputeBudgetProgram, Connection, Keypair, PublicKey, StakeProgram, Transaction, TransactionInstruction, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
 
-export const addMeta = async (tx: Transaction, feePayer:PublicKey, connection: Connection) => {
+// Builds a v0 VersionedTransaction from the given instructions, prepending the priority fee.
+// The blockhash is returned alongside so callers can confirm against the same expiry window.
+export const buildVersionedTx = async (instructions: TransactionInstruction[], feePayer: PublicKey, connection: Connection): Promise<[VersionedTransaction, BlockhashWithExpiryBlockHeight]> => {
 
     let blockhash = await connection.getLatestBlockhash();
 
-    tx.recentBlockhash = blockhash.blockhash
-    tx.lastValidBlockHeight = blockhash.lastValidBlockHeight
-    tx.feePayer = feePayer
-    
-    
     const addPriorityFee = ComputeBudgetProgram.setComputeUnitPrice({
         microLamports: parseInt(process.env.PRIORITY_FEE),
     })
 
-    tx = tx.add(addPriorityFee)
+    const message = new TransactionMessage({
+        payerKey: feePayer,
+        recentBlockhash: blockhash.blockhash,
+        instructions: [addPriorityFee, ...instructions]
+    }).compileToV0Message()
 
-    return tx
+    return [new VersionedTransaction(message), blockhash]
 
 }
 
