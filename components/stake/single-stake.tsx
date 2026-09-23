@@ -7,7 +7,7 @@ import config from '../../config.json';
 import { getStakeAccounts, StakeInput } from './common'
 import { getEpochInfo, Spinner } from '../common';
 import { RenderImage, RenderName } from '../validator/common';
-import { addMeta, createStake } from './transactions'
+import { buildVersionedTx, createStake } from './transactions'
 import * as gtag from '../../lib/gtag.js'
 
 export const StakeDialog: FC<{
@@ -136,16 +136,17 @@ export const StakeDialog: FC<{
 
         try {
 
-            let recentBlockhash = await connection.getLatestBlockhash();
             let [stakeTx, delegateIx, stakeKeys] = createStake(publicKey, validator, stakeAmount*LAMPORTS_PER_SOL)
-            
-            stakeTx.add(delegateIx);
 
-            stakeTx = await addMeta(stakeTx,publicKey,connection)
+            let [versionedTx, recentBlockhash] = await buildVersionedTx(
+                [...stakeTx.instructions, ...delegateIx.instructions],
+                publicKey,
+                connection
+            )
 
-            stakeTx.partialSign(stakeKeys);
+            versionedTx.sign([stakeKeys]);
 
-            let signedTx = await signTransaction(stakeTx);
+            let signedTx = await signTransaction(versionedTx);
 
             let signature = await connection.sendRawTransaction(signedTx.serialize());
             console.log('Submitted transaction signature: '+signature);
