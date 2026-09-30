@@ -18,7 +18,6 @@ import * as browser from '../../lib/browser';
 import { VoteSuccessChart } from './vote_success';
 import { SkipRateChart } from './skip_rate';
 
-const API_URL = process.env.API_BASE_URL;
 
 class ValidatorDetail extends React.Component<validatorDetailI, 
     {
@@ -57,9 +56,7 @@ class ValidatorDetail extends React.Component<validatorDetailI,
         })
     }
     getValidator() {
-        axios(API_URL+config.API_ENDPOINTS.validator+'/'+this.props.vote_identity, {
-          headers: {'Content-Type':'application/json'}
-        })
+        axios('/api/v2/validator/'+this.props.vote_identity)
           .then(response => {
             let json = response.data as validatorI;
             
@@ -217,10 +214,10 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                 let formatted_date: Date|null = null
 
                 if(isSafari){
-                    let timeZone = event.created_at.slice(-3)+':00';
-                    formatted_date = new Date(event.created_at.substring(0, 19).replace(/-/g, "/")+timeZone)
-                }else{                
-                    formatted_date = new Date(event.created_at)
+                    let timeZone = event.observed_at.slice(-3)+':00';
+                    formatted_date = new Date(event.observed_at.substring(0, 19).replace(/-/g, "/")+timeZone)
+                }else{
+                    formatted_date = new Date(event.observed_at)
                 }
                 let prev_comm = (this.state.jitoCommissionHistory!==null && i+1 < this.state.jitoCommissionHistory.length && this.state.jitoCommissionHistory[i+1].commission_bps != null)  ? this.state.jitoCommissionHistory[i+1].commission_bps/100+' %' : null
                 if(i==this.state.jitoCommissionHistory.length-1) prev_comm = 'N/A';
@@ -278,7 +275,7 @@ class ValidatorDetail extends React.Component<validatorDetailI,
 
             let updated_at = new Date(this.state.validator.updated_at);
 
-            let activated_stake = new Intl.NumberFormat().format(Number(this.state.validator.activated_stake.toFixed(0)));
+            let activated_stake = new Intl.NumberFormat().format(Math.round(Number(this.state.validator.activated_stake)));
 
             return ( [
                 <div className='container-sm m-1 position-relative d-flex align-items-center validator-detail-header' key='validator-details-header'>

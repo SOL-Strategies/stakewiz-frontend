@@ -14,7 +14,6 @@ import { ValidatorContext } from './validator/validatorhook'
 import ordinal from 'ordinal'
 import WizEmblem from '../public/images/emblem.svg'
 
-const API_URL = process.env.API_BASE_URL;
 
 class ValidatorListing extends React.Component<ValidatorListingI, {}> {
     constructor(props, context ) {
@@ -50,9 +49,7 @@ class ValidatorListing extends React.Component<ValidatorListingI, {}> {
     }
 
     getWalletValidators(pubkey) {
-      axios(API_URL+config.API_ENDPOINTS.wallet_validators+'/'+pubkey, {
-          headers: {'Content-Type':'application/json'}
-      })
+      axios('/api/v2/stake/by_withdraw_authority/'+pubkey)
         .then(response => {
           let json = response.data;
           
@@ -310,19 +307,19 @@ const ValidatorBox: FC<ValidatorBoxPropsI> = ({validator,clusterStats,showWizMod
 
         let stakeText, stakeColor, stakeBg, stakeWidth;
         if(validator.stake_ratio > config.STAKE_CATEGORIES.HIGH) {
-            stakeText = 'High Stake: ◎ '+new Intl.NumberFormat().format(Number(validator.activated_stake.toFixed(0)));
+            stakeText = 'High Stake: ◎ '+new Intl.NumberFormat().format(Math.round(Number(validator.activated_stake)));
             stakeColor = 'text-danger';
             stakeBg = 'bg-danger';
             stakeWidth = 100;
         }
         else if(validator.stake_ratio > config.STAKE_CATEGORIES.MEDIUM) {
-            stakeText = 'Medium Stake: ◎ '+new Intl.NumberFormat().format(Number(validator.activated_stake.toFixed(0)));
+            stakeText = 'Medium Stake: ◎ '+new Intl.NumberFormat().format(Math.round(Number(validator.activated_stake)));
             stakeColor = 'text-warning';
             stakeBg = 'bg-warning';
             stakeWidth = validator.stake_ratio*1000;
         }
         else {
-            stakeText = 'Low Stake: ◎ '+new Intl.NumberFormat().format(Number(validator.activated_stake.toFixed(0))); 
+            stakeText = 'Low Stake: ◎ '+new Intl.NumberFormat().format(Math.round(Number(validator.activated_stake))); 
             stakeColor = 'text-success';
             stakeBg = 'bg-success';
             stakeWidth = validator.stake_ratio*1000;
@@ -532,7 +529,7 @@ const ValidatorBox: FC<ValidatorBoxPropsI> = ({validator,clusterStats,showWizMod
                 >
                     <div className={'bg-wizlight rounded text-center flex-grow-1 m-1'+(showListView?' w-70':'')}>
                         <div className='p-2'>   
-                            {validator.credit_ratio.toFixed(1)}%
+                            {Number(validator.credit_ratio).toFixed(1)}%
                         </div>
                         <div>
                             

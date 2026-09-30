@@ -15,20 +15,20 @@ export const Gauges: FC<{
 
     let skipGauge = [
         ["Label", "Value"],
-        ["Skip Rate", {v: skip_rate, f: skip_rate.toFixed(1)+'%'}]
+        ["Skip Rate", {v: Number(skip_rate), f: Number(skip_rate).toFixed(1)+'%'}]
         
     ];
     let creditGauge = [
         ["Label", "Value"],
-        ["Vote Credits", {v: credit_ratio, f: credit_ratio.toFixed(1)+'%'}]
+        ["Vote Credits", {v: Number(credit_ratio), f: Number(credit_ratio).toFixed(1)+'%'}]
     ]
     let wizScoreGauge = [
         ["Label", "Value"],
-        ["Wiz Score", {v: wiz_score, f: wiz_score.toFixed(1)+'%'}]
+        ["Wiz Score", {v: Number(wiz_score), f: Number(wiz_score).toFixed(1)+'%'}]
     ]
     let uptimeGauge = [
         ["Label", "Value"],
-        ["Uptime", {v: uptime, f: uptime.toFixed(2)+'%'}]
+        ["Uptime", {v: Number(uptime), f: Number(uptime).toFixed(2)+'%'}]
     ]
 
     let chartStyle = {
@@ -60,7 +60,7 @@ export const Gauges: FC<{
                                     ]
                                 }}
                                 maxValue={5}
-                                value={skip_rate} 
+                                value={Number(skip_rate)}
                                 pointer={{hide:true}}
                                 style={chartStyle}
                                 labels={{tickLabels:{hideMinMax:true}, valueLabel: {formatTextValue: (value) => value+' %', style: { fontSize: '30px'}}}}
@@ -89,7 +89,7 @@ export const Gauges: FC<{
                                         }
                                     ]
                                 }}
-                                value={credit_ratio} 
+                                value={Number(credit_ratio)}
                                 pointer={{hide:true}}
                                 style={chartStyle}
                                 labels={{tickLabels:{hideMinMax:true}, valueLabel: {formatTextValue: (value) => value+' %', style: { fontSize: '30px'}}}}
@@ -120,7 +120,7 @@ export const Gauges: FC<{
                                         }
                                     ]
                                 }}
-                                value={wiz_score} 
+                                value={Number(wiz_score)}
                                 pointer={{hide:true}}
                                 style={chartStyle}
                                 labels={{tickLabels:{hideMinMax:true}, valueLabel: {formatTextValue: (value) => value+' %', style: { fontSize: '30px'}, maxDecimalDigits: 1}}}
@@ -149,7 +149,7 @@ export const Gauges: FC<{
                                         }
                                     ]
                                 }}
-                                value={uptime} 
+                                value={Number(uptime)}
                                 pointer={{hide:true}}
                                 style={chartStyle}
                                 labels={{tickLabels:{hideMinMax:true}, valueLabel: {formatTextValue: (value) => value+' %', style: { fontSize: '30px'}}}}
