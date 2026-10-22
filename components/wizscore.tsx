@@ -174,16 +174,6 @@ class WizScoreBody extends React.Component<{
                             </thead>
                             <tbody>
                                 <WizScoreRow
-                                    label='Vote Success'
-                                    tooltip="Ratio of credits vs slots completed this epoch."
-                                    value={this.props.validator.vote_success+'%'}
-                                    score={this.props.validator.vote_success_score}
-                                    addPercent={true}
-                                    threshold='0'
-                                    color='green'
-                                    sign='+'
-                                /> 
-                                <WizScoreRow
                                     label='Slot Skip Rate'
                                     tooltip="Percentage of leader slots in which this validator failed to produce a block. Score is ignored for low-staked validators."
                                     value={new Intl.NumberFormat().format(Number(this.props.validator.skip_rate.toFixed(1)))+'%'}
@@ -432,17 +422,6 @@ class WizScoreWeightings extends React.Component<{},
                             </tr>
                         </thead>
                         <tbody>
-                            <tr> 
-                                <td>
-                                    Vote Success Weight 
-                                </td>
-                                <td>
-                                    {this.state.weightings.vote_success_weight}
-                                </td>
-                                <td>
-                                    The weighting given to validator&apos;s voting success.
-                                </td>
-                            </tr>
                             <tr> 
                                 <td>
                                     Skip rate weight 

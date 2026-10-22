@@ -685,29 +685,6 @@ export const Stakes: FC<{userPubkey: PublicKey, connection: Connection, connecte
                                     placement="bottom"
                                     overlay={
                                         <Tooltip>
-                                            Voting rate (higher is better)
-                                        </Tooltip>
-                                    } 
-                                >
-                                    <div className='bg-wizlight rounded text-center flex-grow-1 m-1'>
-                                        <div className='p-2'>   
-                                            {delegateValidator.credit_ratio.toFixed(1)}%
-                                        </div>
-                                        <div>
-                                            
-                                                <i className='bi bi-pencil-square'></i>
-                                            
-                                        </div>
-                                        <div className="progress bg-semidark" style={{height: '2px'}}>                        
-                                            <div className="progress-bar bg-warning" role="progressbar" aria-valuenow={delegateValidator.credit_ratio} aria-valuemin={0} aria-valuemax={100} style={{width: delegateValidator.credit_ratio+'%'}}>
-                                            </div>                    
-                                        </div>    
-                                    </div>
-                                </OverlayTrigger>
-                                <OverlayTrigger
-                                    placement="bottom"
-                                    overlay={
-                                        <Tooltip>
                                             Commission
                                         </Tooltip>
                                     } 
