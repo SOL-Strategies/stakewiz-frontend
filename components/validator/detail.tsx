@@ -626,6 +626,17 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                             <div className='validator-detail-flex-opacity-bg'></div>
                             <div className='card text-light'>
                                 <div className='card-header'>
+                                    Commission History
+                                </div>
+                                <div className='card-body'>
+                                    {this.renderCommissionTable()}
+                                </div>
+                            </div>
+                        </div>
+                        <div className='flex-grow-1 m-1 validator-detail-flex-card'>
+                            <div className='validator-detail-flex-opacity-bg'></div>
+                            <div className='card text-light'>
+                                <div className='card-header'>
                                     Scorecard
                                 </div>
                                 <div className='card-body validator-detail-scorecard'>
@@ -637,14 +648,6 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                         </div>
                         <div className='flex-grow-1 m-1 validator-detail-flex-card'>
                             <div className='validator-detail-flex-opacity-bg'></div>
-                            <div className='card text-light'>
-                                <div className='card-header'>
-                                    Commission History
-                                </div>
-                                <div className='card-body'>
-                                    {this.renderCommissionTable()}
-                                </div>
-                            </div>
                             <div className='card text-light'>
                                 <div className='card-header'>
                                     Jito MEV Commission History
