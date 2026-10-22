@@ -6,10 +6,9 @@ import WizEmblem from '../../public/images/emblem.svg'
 
 export const Gauges: FC<{
     skip_rate: number, 
-    credit_ratio: number,
     wiz_score: number, 
     uptime: number }> = ({
-        skip_rate, credit_ratio, wiz_score, uptime
+        skip_rate, wiz_score, uptime
     }) => {
 
 
@@ -18,10 +17,6 @@ export const Gauges: FC<{
         ["Skip Rate", {v: skip_rate, f: skip_rate.toFixed(1)+'%'}]
         
     ];
-    let creditGauge = [
-        ["Label", "Value"],
-        ["Vote Credits", {v: credit_ratio, f: credit_ratio.toFixed(1)+'%'}]
-    ]
     let wizScoreGauge = [
         ["Label", "Value"],
         ["Wiz Score", {v: wiz_score, f: wiz_score.toFixed(1)+'%'}]
@@ -68,35 +63,6 @@ export const Gauges: FC<{
                         </div>
                         <div>
                             Skip rate
-                        </div>
-                    </div>
-                    <div className='flex-grow-1 d-flex flex-column align-items-center'>
-                        <div>
-                            <GaugeComponent id='gauge-chart-voting' 
-                                type="semicircle"
-                                arc={{
-                                    cornerRadius: 0,
-                                    width:0.15,
-                                    subArcs: [
-                                        {
-                                            limit: (credit_ratio>=100) ? 99.999 : (credit_ratio>95) ? (credit_ratio-95)*20 : 0,
-                                            color: '#55bb55',
-                                            
-                                        },
-                                        {
-                                            limit: 100,
-                                            color:'#bb5555',
-                                        }
-                                    ]
-                                }}
-                                value={credit_ratio} 
-                                pointer={{hide:true}}
-                                style={chartStyle}
-                                labels={{tickLabels:{hideMinMax:true}, valueLabel: {formatTextValue: (value) => value+' %', style: { fontSize: '30px'}}}}
-                            />
-                        </div>
-                        <div>
-                            Voting rate
                         </div>
                     </div>
                 </div>
