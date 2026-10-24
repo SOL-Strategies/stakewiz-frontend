@@ -148,7 +148,8 @@ export const BlockPacking: FC<{vote_identity: string}> = ({vote_identity}) => {
         }
     }
 
-    const skipRateMedian = c?.validator_skip_rate?.median;
+    // Total skipped / total leader slots, so effectively stake-weighted as leader slots follow stake
+    const networkSkipRate = c?.skip_rate;
 
     return (
         <div>
@@ -166,7 +167,7 @@ export const BlockPacking: FC<{vote_identity: string}> = ({vote_identity}) => {
                 </select>
                 <span className='small'>
                     {v.blocks_produced.toLocaleString()}/{v.leader_slots.toLocaleString()} blocks · skip rate {percent(2)(v.skip_rate)}
-                    {(skipRateMedian!=null) ? <span className='text-secondary'> (median {percent(2)(skipRateMedian)})</span> : null}
+                    {(networkSkipRate!=null) ? <span className='text-secondary' title='Stake-weighted: total skipped slots over total leader slots across the network'> (network {percent(2)(networkSkipRate)})</span> : null}
                 </span>
             </div>
             {(lowBlocks) ? (
