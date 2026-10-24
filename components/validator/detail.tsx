@@ -610,7 +610,7 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                                         placement="bottom"
                                         overlay={
                                             <Tooltip>
-                                                Last 2000 observations of vote success taken during our Wiz Score snapshots, approximately every five minutes. Vote Success is the share of the optimal vote rewards the validator earned this epoch, combining its own votes landing (voting success) and including other validators' votes in the blocks it produced (inclusion success).
+                                                Last 2000 observations of vote success taken during our Wiz Score snapshots, approximately every five minutes. Vote Success is the share of the optimal vote rewards the validator earned this epoch, combining its own votes landing (voting success) and including other validators&apos; votes in the blocks it produced (inclusion success).
                                             </Tooltip>
                                         } 
                                     >
