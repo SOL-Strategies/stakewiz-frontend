@@ -11,6 +11,7 @@ export interface validatorI {
     version: string;
     delinquent: boolean;
     skip_rate: number;
+    wiz_skip_rate: number;
     created_at: string;
     updated_at: string;
     oldest_active_stake_pubkey: string;
@@ -25,7 +26,7 @@ export interface validatorI {
     gossip_ip: string;
     mod: boolean;
     is_jito: boolean;
-    jito_commission_bps;
+    jito_commission_bps: number;
     admin_comment: string|null;
     ip_latitude: string;
     ip_longitude: string;
@@ -45,6 +46,7 @@ export interface validatorI {
     skip_rate_score: number;
     info_score: number;
     commission_score: number;
+    wizscore_commission: number;
     first_epoch_distance: number;
     epoch_distance_score: number;
     stake_weight: number;
