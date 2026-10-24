@@ -16,7 +16,6 @@ import { getCommissionHistory, getJitoCommissionHistory } from '../stake/common'
 import { CommissionHistoryI, JitoCommissionHistoryI } from '../stake/interfaces';
 import * as browser from '../../lib/browser';
 import { VoteSuccessChart } from './vote_success';
-import { SkipRateChart } from './skip_rate';
 import { BlockPacking } from './block_packing';
 
 const API_URL = process.env.API_BASE_URL;
@@ -629,35 +628,12 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                             <div className='validator-detail-flex-opacity-bg'></div>
                             <div className='card text-light'>
                                 <div className='card-header'>
-                                    Skip Rate
-                                    <OverlayTrigger
-                                        placement="bottom"
-                                        overlay={
-                                            <Tooltip>
-                                                Last 2000 observations of skip rate taken during our Wiz Score snapshots, approximately every five minutes
-                                            </Tooltip>
-                                        } 
-                                    >
-                                        <i className='bi bi-info-circle ms-2'></i>
-                                    </OverlayTrigger>
-                                </div>
-                                <div className='card-body'>
-                                    <SkipRateChart
-                                        vote_identity={this.state.validator.vote_identity}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                        <div className='flex-grow-1 m-1 validator-detail-flex-card validator-detail-flex-card-full'>
-                            <div className='validator-detail-flex-opacity-bg'></div>
-                            <div className='card text-light'>
-                                <div className='card-header'>
                                     Block Packing
                                     <OverlayTrigger
                                         placement="bottom"
                                         overlay={
                                             <Tooltip>
-                                                Per-epoch block production stats from every block since Alpenglow (epoch 1064), compared with the rest of the network. Updated every 15 minutes.
+                                                How this validator's blocks compare with the network in the selected epoch, from every block since Alpenglow (epoch 1064). 100% is the network median (fee capture, fee per CU) or network-wide figure; hover a bar for the raw values. Updated every 15 minutes.
                                             </Tooltip>
                                         }
                                     >
