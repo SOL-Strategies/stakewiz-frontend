@@ -82,7 +82,7 @@ export const Gauges: FC<{
                                 placement="bottom"
                                 overlay={
                                     <Tooltip>
-                                        Fee capture &times; share of leader slots produced this epoch. 100% is a typical block for the market in every leader slot.
+                                        Fee capture index minus skip rate. A market-typical block in every slot would be a 100% value.
                                         {(block_production_median!=null) ? <><br />Network median {block_production_median.toFixed(1)}%, p10 {block_production_p10?.toFixed(1)}%.</> : null}
                                         {(block_production==null) ? <><br />{blockProductionInsufficient}</> : null}
                                     </Tooltip>
