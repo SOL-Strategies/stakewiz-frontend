@@ -4,21 +4,24 @@ const GaugeComponent = dynamic(() => import('react-gauge-component'), { ssr: fal
 const GaugeChart = dynamic(() => import('react-gauge-chart'), { ssr: false });
 import WizEmblem from '../../public/images/emblem.svg'
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
-import { BLOCK_PRODUCTION_MAX, BLOCK_PRODUCTION_INSUFFICIENT, blockProductionColor as getBlockProductionColor } from './common';
+import { BLOCK_PRODUCTION_MAX, BLOCK_PRODUCTION_INSUFFICIENT, blockProductionColor as getBlockProductionColor, networkSpreadColor as getNetworkSpreadColor } from './common';
 
 export const Gauges: FC<{
     block_production: number | null,
     block_production_p10: number | null,
     block_production_median: number | null,
     vote_success: number,
+    vote_success_p10?: number | null,
+    vote_success_median?: number | null,
     wiz_score: number, 
     uptime: number }> = ({
-        block_production, block_production_p10, block_production_median, vote_success, wiz_score, uptime
+        block_production, block_production_p10, block_production_median, vote_success, vote_success_p10, vote_success_median, wiz_score, uptime
     }) => {
 
     const blockProductionMax = BLOCK_PRODUCTION_MAX;
     const blockProductionInsufficient = BLOCK_PRODUCTION_INSUFFICIENT;
     const blockProductionColor = getBlockProductionColor(block_production, block_production_p10, block_production_median);
+    const voteSuccessColor = getNetworkSpreadColor(vote_success, vote_success_p10, vote_success_median) ?? '#55bb55';
 
     let voteSuccessGauge = [
         ["Label", "Value"],
@@ -101,13 +104,13 @@ export const Gauges: FC<{
                                     width:0.15,
                                     subArcs: [
                                         {
-                                            limit: (vote_success>=100) ? 99.999 : (vote_success>95) ? (vote_success-95)*20 : 0,
-                                            color: '#55bb55',
+                                            limit: Math.max(0.01, Math.min(vote_success, 99.99)),
+                                            color: voteSuccessColor,
                                             
                                         },
                                         {
                                             limit: 100,
-                                            color:'#bb5555',
+                                            color:'#555555',
                                         }
                                     ]
                                 }}
@@ -119,6 +122,17 @@ export const Gauges: FC<{
                         </div>
                         <div>
                             Vote success
+                            <OverlayTrigger
+                                placement="bottom"
+                                overlay={
+                                    <Tooltip>
+                                        Share of the optimal vote rewards earned this epoch.
+                                        {(vote_success_median!=null) ? <><br />Network median {vote_success_median.toFixed(1)}%, p10 {vote_success_p10?.toFixed(1)}%.</> : null}
+                                    </Tooltip>
+                                }
+                            >
+                                <i className='bi bi-info-circle ms-1'></i>
+                            </OverlayTrigger>
                         </div>
                     </div>
                 </div>

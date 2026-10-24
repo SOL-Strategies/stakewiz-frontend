@@ -317,6 +317,8 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                             block_production_p10={this.state.validator.block_production_p10}
                             block_production_median={this.state.validator.block_production_median}
                             vote_success={this.state.validator.vote_success}
+                            vote_success_p10={this.state.clusterStats?.vote_success?.p10}
+                            vote_success_median={this.state.clusterStats?.vote_success?.median}
                             wiz_score={this.state.validator.wiz_score}
                             uptime={this.state.validator.uptime}
 

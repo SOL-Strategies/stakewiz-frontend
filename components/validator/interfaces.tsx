@@ -100,6 +100,10 @@ export interface clusterStatsI {
     avg_commission: number;
     avg_skip_rate: number;
     avg_apy: number;
+    // Percent spread across validators with a value this epoch (absent until the API deploys it)
+    vote_success?: PercentilesI | null;
+    voting_success?: PercentilesI | null;
+    inclusion_success?: PercentilesI | null;
 };
 
 export interface ValidatorBoxPropsI {
