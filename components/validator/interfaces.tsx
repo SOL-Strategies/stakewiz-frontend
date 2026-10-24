@@ -178,3 +178,52 @@ export interface EpochInfoI {
     remaining_seconds: number;
     elapsed_seconds: number;
 }
+// Block stats ratios are fractions (0-1) and amounts are lamports
+export interface BlockStatsI {
+    epoch: number;
+    leader_slots: number;
+    blocks_produced: number;
+    skipped_slots: number;
+    skip_rate: number;
+    fee_total: number;
+    fee_base_total: number;
+    fee_priority_total: number;
+    leader_reward_lamports: number;
+    fee_per_block: number;
+    fee_per_cu: number;
+    priority_fee_per_cu: number;
+    tips_lamports: number;
+    tip_blocks: number;
+    tips_per_block: number;
+    cu_total: number;
+    cu_per_block: number;
+    cost_units_per_block: number;
+    fullness: number;
+    full_blocks: number;
+    full_block_share: number;
+    tx_count: number;
+    txs_per_block: number;
+    failed_tx_share: number;
+    final: boolean;
+}
+
+export interface ValidatorBlockStatsI extends BlockStatsI {
+    identity: string;
+    fullness_p90: number;
+    cost_units_p90: number;
+    fee_capture_index: number | null;
+    value_capture_index: number | null;
+}
+
+export interface PercentilesI {
+    p10: number;
+    median: number;
+    p90: number;
+}
+
+export interface ClusterBlockStatsI extends BlockStatsI {
+    validators: number;
+    validator_fee_per_cu: PercentilesI | null;
+    validator_fee_capture_index: PercentilesI | null;
+    validator_skip_rate: PercentilesI | null;
+}

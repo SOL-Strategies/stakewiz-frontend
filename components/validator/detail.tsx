@@ -17,6 +17,7 @@ import { CommissionHistoryI, JitoCommissionHistoryI } from '../stake/interfaces'
 import * as browser from '../../lib/browser';
 import { VoteSuccessChart } from './vote_success';
 import { SkipRateChart } from './skip_rate';
+import { BlockPacking } from './block_packing';
 
 const API_URL = process.env.API_BASE_URL;
 
@@ -642,6 +643,29 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                                 </div>
                                 <div className='card-body'>
                                     <SkipRateChart
+                                        vote_identity={this.state.validator.vote_identity}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div className='flex-grow-1 m-1 validator-detail-flex-card validator-detail-flex-card-full'>
+                            <div className='validator-detail-flex-opacity-bg'></div>
+                            <div className='card text-light'>
+                                <div className='card-header'>
+                                    Block Packing
+                                    <OverlayTrigger
+                                        placement="bottom"
+                                        overlay={
+                                            <Tooltip>
+                                                Per-epoch block production stats from every block since Alpenglow (epoch 1064), compared with the rest of the network. Updated every 15 minutes.
+                                            </Tooltip>
+                                        }
+                                    >
+                                        <i className='bi bi-info-circle ms-2'></i>
+                                    </OverlayTrigger>
+                                </div>
+                                <div className='card-body'>
+                                    <BlockPacking
                                         vote_identity={this.state.validator.vote_identity}
                                     />
                                 </div>

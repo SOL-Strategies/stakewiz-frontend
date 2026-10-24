@@ -23,17 +23,21 @@ export const VoteSuccessChart: FC<{vote_identity: string}> = ({vote_identity}) =
                 let scores = [];
                 scores.push([
                     'Date',
-                    'Vote Success'
+                    'Vote Success',
+                    'Voting Success',
+                    'Inclusion Success'
                 ]);
 
                 let isSafari:boolean = browser.check('Safari');
 
                 for(var i in json) {
+                        // voting/inclusion success are null before measurement began (and inclusion until 40 leader slots), which renders as a gap
+                        let values = [json[i].vote_success, json[i].voting_success, json[i].inclusion_success];
                         if(isSafari){
                             let timeZone = json[i].created_at.slice(-3)+':00';
-                            scores.push([new Date(json[i].created_at.substring(0, 19).replace(/-/g, "/")+timeZone), parseFloat(json[i].vote_success)]);
-                        }else{                
-                            scores.push([new Date(json[i].created_at), parseFloat(json[i].vote_success)]);
+                            scores.push([new Date(json[i].created_at.substring(0, 19).replace(/-/g, "/")+timeZone), ...values]);
+                        }else{
+                            scores.push([new Date(json[i].created_at), ...values]);
                         }
                 }
 
@@ -60,10 +64,17 @@ export const VoteSuccessChart: FC<{vote_identity: string}> = ({vote_identity}) =
                 data={allScores}
                 options={{
                     backgroundColor: 'none',
-                    colors: ['#fff', '#fff', '#fff'],
+                    colors: ['#fff', '#ffc107', '#0dcaf0'],
                     lineWidth: 2,
+                    series: {
+                        1: { lineWidth: 1 },
+                        2: { lineWidth: 1 }
+                    },
                     legend:{
-                        position:'none'
+                        position:'top',
+                        textStyle: {
+                            color: '#fff'
+                        }
                     },
                     vAxis: {
                         gridlines: {
@@ -83,7 +94,7 @@ export const VoteSuccessChart: FC<{vote_identity: string}> = ({vote_identity}) =
                         }
                     },
                     chartArea: {
-                        top: 20,
+                        top: 30,
                         left: 50,
                         width:'100%',
                         height:'80%'

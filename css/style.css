@@ -648,6 +648,10 @@ a:hover {
   z-index:10;
 }
 
+.validator-detail-flex-card-full {
+  width:100%;
+}
+
 .validator-detail-flex-card .card {
   border-radius:0;
   border:0;
