@@ -60,10 +60,38 @@ function WizScoreRow(props) {
 class WizScoreBody extends React.Component<{
     validator: validatorI;
 },
-{}> {
-    
+{
+    info_weight: number;
+}> {
+    constructor(props) {
+        super(props);
+        this.state = {
+            info_weight: undefined
+        };
+    }
+
+    componentDidMount() {
+        this.getInfoWeight();
+    }
+
+    getInfoWeight() {
+        axios(API_URL+config.API_ENDPOINTS.weightings, {
+            headers: {'Content-Type':'application/json'}
+        })
+            .then(response => {
+            this.setState({
+                info_weight: response.data.info_weight
+                });
+            })
+            .catch(e => {
+            console.log(e);
+            })
+    }
+
     renderInfoCount() {
-        return (this.props.validator.info_score)
+        // info_score is a percentage; each of the 5 items is worth an equal share of info_weight
+        if(!this.state.info_weight) return '-';
+        return Math.round(this.props.validator.info_score / (this.state.info_weight*100/5));
     }
 
     renderWithdrawAuthorityValue() {
