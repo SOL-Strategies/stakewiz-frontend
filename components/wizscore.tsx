@@ -75,6 +75,14 @@ class WizScoreBody extends React.Component<{
         }
     }
 
+    renderSuccessValue(value: number | null) {
+        return (value==null) ? 'N/A' : Number(value).toFixed(2)+'%';
+    }
+
+    renderSuccessScore(score: number | string | null) {
+        return (score==null) ? 'N/A' : Number(score);
+    }
+
     renderSuperminorityValue() {
         if(this.props.validator.superminority_penalty==0) {
             return 'Below superminority	';
@@ -173,6 +181,26 @@ class WizScoreBody extends React.Component<{
                                 </tr>
                             </thead>
                             <tbody>
+                                <WizScoreRow
+                                    label='Voting Success'
+                                    tooltip="Percentage of votes the validator successfully landed this epoch."
+                                    value={this.renderSuccessValue(this.props.validator.voting_success)}
+                                    score={this.renderSuccessScore(this.props.validator.voting_success_score)}
+                                    addPercent={this.props.validator.voting_success_score!=null}
+                                    threshold='0'
+                                    color='green'
+                                    sign={(this.props.validator.voting_success_score!=null) ? '+' : undefined}
+                                /> 
+                                <WizScoreRow
+                                    label='Inclusion Success'
+                                    tooltip="Percentage of the validator's votes included on chain this epoch. Not available for low-stake validators without enough data."
+                                    value={this.renderSuccessValue(this.props.validator.inclusion_success)}
+                                    score={this.renderSuccessScore(this.props.validator.inclusion_success_score)}
+                                    addPercent={this.props.validator.inclusion_success_score!=null}
+                                    threshold='0'
+                                    color='green'
+                                    sign={(this.props.validator.inclusion_success_score!=null) ? '+' : undefined}
+                                /> 
                                 <WizScoreRow
                                     label='Slot Skip Rate'
                                     tooltip="Percentage of leader slots in which this validator failed to produce a block. Score is ignored for low-staked validators."

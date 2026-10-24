@@ -38,6 +38,10 @@ export interface validatorI {
     ignore: boolean;
     vote_success: number;
     vote_success_score: number;
+    voting_success: number | null;
+    voting_success_score: number | string | null;
+    inclusion_success: number | null;
+    inclusion_success_score: number | string | null;
     skip_rate_score: number;
     info_score: number;
     commission_score: number;

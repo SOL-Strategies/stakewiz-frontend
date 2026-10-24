@@ -249,6 +249,14 @@ export const StakeDialog: FC<{
                             </div>
                         </div>
                         <div className='col'>
+                            <div className={(validator.vote_success>80) ? 'text-success' : 'text-warning'}>
+                                {validator.vote_success} %
+                            </div>
+                            <div>
+                                Vote Success
+                            </div>
+                        </div>
+                        <div className='col'>
                             <div className={(validator.commission<1000) ? null : 'text-danger'}>
                                 {validator.commission/100} %
                             </div>

@@ -526,6 +526,29 @@ const ValidatorBox: FC<ValidatorBoxPropsI> = ({validator,clusterStats,showWizMod
                     placement="bottom"
                     overlay={
                         <Tooltip>
+                            Vote success (higher is better)
+                        </Tooltip>
+                    } 
+                >
+                    <div className={'bg-wizlight rounded text-center flex-grow-1 m-1'+(showListView?' w-70':'')}>
+                        <div className='p-2'>   
+                            {validator.vote_success.toFixed(1)}%
+                        </div>
+                        <div>
+                            
+                                <i className='bi bi-pencil-square'></i>
+                            
+                        </div>
+                        <div className="progress bg-semidark" style={{height: '2px'}}>                        
+                            <div className="progress-bar bg-warning" role="progressbar" aria-valuenow={validator.vote_success} aria-valuemin={0} aria-valuemax={100} style={{width: validator.vote_success+'%'}}>
+                            </div>                    
+                        </div>    
+                    </div>
+                </OverlayTrigger>
+                <OverlayTrigger
+                    placement="bottom"
+                    overlay={
+                        <Tooltip>
                             Commission
                         </Tooltip>
                     } 

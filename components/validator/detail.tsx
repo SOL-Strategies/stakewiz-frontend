@@ -313,6 +313,7 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                     <div className='d-flex'>
                         <Gauges
                             skip_rate={this.state.validator.skip_rate}
+                            vote_success={this.state.validator.vote_success}
                             wiz_score={this.state.validator.wiz_score}
                             uptime={this.state.validator.uptime}
 
