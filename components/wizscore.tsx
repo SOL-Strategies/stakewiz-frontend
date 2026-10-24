@@ -221,7 +221,7 @@ class WizScoreBody extends React.Component<{
                                 /> 
                                 <WizScoreRow
                                     label='Inclusion Success'
-                                    tooltip="Share of the optimal leader vote rewards the validator earned this epoch by including other validators' votes in its blocks. Skipped leader slots count against it. Shown once the validator has had 40 leader slots this epoch; until then its score uses voting success."
+                                    tooltip="Share of the optimal leader vote rewards the validator earned this epoch by including other validators' votes in its blocks. Skipped leader slots count against it. Shown once the validator has had 12 leader slots this epoch; until then its score uses voting success."
                                     value={this.renderSuccessValue(this.props.validator.inclusion_success)}
                                     score={this.renderSuccessScore(this.props.validator.inclusion_success_score)}
                                     addPercent={this.props.validator.inclusion_success_score!=null}
