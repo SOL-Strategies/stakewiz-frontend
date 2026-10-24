@@ -12,6 +12,10 @@ export interface validatorI {
     delinquent: boolean;
     skip_rate: number;
     wiz_skip_rate: number;
+    block_production: number | null;
+    block_production_p10: number | null;
+    block_production_median: number | null;
+    block_production_p90: number | null;
     created_at: string;
     updated_at: string;
     oldest_active_stake_pubkey: string;
@@ -209,6 +213,7 @@ export interface BlockStatsI {
 
 export interface ValidatorBlockStatsI extends BlockStatsI {
     identity: string;
+    block_production: number | null;
     fullness_p90: number;
     cost_units_p90: number;
     fee_capture_index: number | null;
@@ -226,4 +231,5 @@ export interface ClusterBlockStatsI extends BlockStatsI {
     validator_fee_per_cu: PercentilesI | null;
     validator_fee_capture_index: PercentilesI | null;
     validator_skip_rate: PercentilesI | null;
+    validator_block_production: PercentilesI | null;
 }

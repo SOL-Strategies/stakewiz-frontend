@@ -313,7 +313,9 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                     </div>
                     <div className='d-flex'>
                         <Gauges
-                            skip_rate={this.state.validator.skip_rate}
+                            block_production={this.state.validator.block_production}
+                            block_production_p10={this.state.validator.block_production_p10}
+                            block_production_median={this.state.validator.block_production_median}
                             vote_success={this.state.validator.vote_success}
                             wiz_score={this.state.validator.wiz_score}
                             uptime={this.state.validator.uptime}

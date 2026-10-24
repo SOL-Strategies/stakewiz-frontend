@@ -3,21 +3,30 @@ import { FC } from "react";
 const GaugeComponent = dynamic(() => import('react-gauge-component'), { ssr: false });
 const GaugeChart = dynamic(() => import('react-gauge-chart'), { ssr: false });
 import WizEmblem from '../../public/images/emblem.svg'
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 
 export const Gauges: FC<{
-    skip_rate: number, 
+    block_production: number | null,
+    block_production_p10: number | null,
+    block_production_median: number | null,
     vote_success: number,
     wiz_score: number, 
     uptime: number }> = ({
-        skip_rate, vote_success, wiz_score, uptime
+        block_production, block_production_p10, block_production_median, vote_success, wiz_score, uptime
     }) => {
 
+    // Block production can exceed 100% (a better than typical block in every leader slot)
+    const blockProductionMax = 125;
+    const blockProductionInsufficient = 'Insufficient leader slots in current epoch, data shown after 12 leader slots';
+    let blockProductionColor = '#55bb55';
+    // Null below 12 blocks produced this epoch: grey out the whole gauge
+    if(block_production==null) {
+        blockProductionColor = '#555555';
+    }
+    else if(block_production_median!=null && block_production < block_production_median) {
+        blockProductionColor = (block_production_p10!=null && block_production < block_production_p10) ? '#bb5555' : '#ddaa33';
+    }
 
-    let skipGauge = [
-        ["Label", "Value"],
-        ["Skip Rate", {v: skip_rate, f: skip_rate.toFixed(1)+'%'}]
-        
-    ];
     let voteSuccessGauge = [
         ["Label", "Value"],
         ["Vote Success", {v: vote_success, f: vote_success.toFixed(1)+'%'}]
@@ -35,39 +44,59 @@ export const Gauges: FC<{
         width: 180
     }
 
-    console.log(skip_rate);
-
     return (
         <div className='d-flex flex-nowrap justify-content-center mobile-gauge-container text-white my-2'>
                 <div className='d-flex flex-row'>
                     <div className='flex-shrink-1 d-flex flex-column align-items-center'>
+                        <OverlayTrigger
+                            placement="bottom"
+                            trigger={(block_production==null) ? ['hover', 'focus'] : []}
+                            overlay={
+                                <Tooltip>
+                                    {blockProductionInsufficient}
+                                </Tooltip>
+                            }
+                        >
                         <div>
-                            <GaugeComponent id='gauge-chart-skip' 
+                            <GaugeComponent id='gauge-chart-block-production'
                                 type="semicircle"
                                 arc={{
                                     cornerRadius: 0,
                                     width:0.15,
                                     subArcs: [
                                         {
-                                            limit: (skip_rate >=5) ? 4.99 : skip_rate,
-                                            color: '#bb5555',
+                                            limit: (block_production==null) ? 0.01 : Math.max(0.01, Math.min(block_production, blockProductionMax-0.01)),
+                                            color: blockProductionColor,
                                             
                                         },
                                         {
-                                            limit: 5,
-                                            color:'#55bb55',
+                                            limit: blockProductionMax,
+                                            color:'#555555',
                                         }
                                     ]
                                 }}
-                                maxValue={5}
-                                value={skip_rate} 
+                                maxValue={blockProductionMax}
+                                value={(block_production==null) ? 0 : Math.min(block_production, blockProductionMax)} 
                                 pointer={{hide:true}}
                                 style={chartStyle}
-                                labels={{tickLabels:{hideMinMax:true}, valueLabel: {formatTextValue: (value) => value+' %', style: { fontSize: '30px'}}}}
+                                labels={{tickLabels:{hideMinMax:true}, valueLabel: {formatTextValue: () => (block_production==null) ? '—' : block_production.toFixed(1)+' %', style: { fontSize: '30px'}}}}
                             />
                         </div>
+                        </OverlayTrigger>
                         <div>
-                            Skip rate
+                            Block packing
+                            <OverlayTrigger
+                                placement="bottom"
+                                overlay={
+                                    <Tooltip>
+                                        Fee capture &times; share of leader slots produced this epoch. 100% is a typical block for the market in every leader slot.
+                                        {(block_production_median!=null) ? <><br />Network median {block_production_median.toFixed(1)}%, p10 {block_production_p10?.toFixed(1)}%.</> : null}
+                                        {(block_production==null) ? <><br />{blockProductionInsufficient}</> : null}
+                                    </Tooltip>
+                                }
+                            >
+                                <i className='bi bi-info-circle ms-1'></i>
+                            </OverlayTrigger>
                         </div>
                     </div>
                     <div className='flex-grow-1 d-flex flex-column align-items-center'>
