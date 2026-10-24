@@ -633,7 +633,7 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                                         placement="bottom"
                                         overlay={
                                             <Tooltip>
-                                                How this validator's blocks compare with the network in the selected epoch, from every block since Alpenglow (epoch 1064). 100% is the network median (fee capture, fee per CU) or network-wide figure; hover a bar for the raw values. Updated every 15 minutes.
+                                                How this validator&apos;s blocks compare with the network in the selected epoch, from every block since Alpenglow (epoch 1064). 100% is the network median (fee capture, fee per CU) or network-wide figure; hover a bar for the raw values. Updated every 15 minutes.
                                             </Tooltip>
                                         }
                                     >
