@@ -685,7 +685,7 @@ export const Stakes: FC<{userPubkey: PublicKey, connection: Connection, connecte
                                     placement="bottom"
                                     overlay={
                                         <Tooltip>
-                                            Vote success (higher is better)
+                                            Vote success: share of the optimal vote rewards earned this epoch (higher is better)
                                         </Tooltip>
                                     } 
                                 >

@@ -526,7 +526,7 @@ const ValidatorBox: FC<ValidatorBoxPropsI> = ({validator,clusterStats,showWizMod
                     placement="bottom"
                     overlay={
                         <Tooltip>
-                            Vote success (higher is better)
+                            Vote success: share of the optimal vote rewards earned this epoch (higher is better)
                         </Tooltip>
                     } 
                 >

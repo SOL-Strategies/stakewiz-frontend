@@ -107,8 +107,8 @@ class WizScoreBody extends React.Component<{
         return (value==null) ? 'N/A' : Number(value).toFixed(2)+'%';
     }
 
-    renderSuccessScore(score: number | string | null) {
-        return (score==null) ? 'N/A' : Number(score);
+    renderSuccessScore(score: number | null) {
+        return (score==null) ? 'N/A' : score;
     }
 
     renderSuperminorityValue() {
@@ -211,7 +211,7 @@ class WizScoreBody extends React.Component<{
                             <tbody>
                                 <WizScoreRow
                                     label='Voting Success'
-                                    tooltip="Percentage of votes the validator successfully landed this epoch."
+                                    tooltip="Share of the optimal voting rewards the validator earned this epoch: how reliably its votes landed in the vote aggregates. Capped at 100%."
                                     value={this.renderSuccessValue(this.props.validator.voting_success)}
                                     score={this.renderSuccessScore(this.props.validator.voting_success_score)}
                                     addPercent={this.props.validator.voting_success_score!=null}
@@ -221,7 +221,7 @@ class WizScoreBody extends React.Component<{
                                 /> 
                                 <WizScoreRow
                                     label='Inclusion Success'
-                                    tooltip="Percentage of other validators' votes that this validator included in the blocks it produced this epoch. Not available for validators without enough leader slots."
+                                    tooltip="Share of the optimal leader vote rewards the validator earned this epoch by including other validators' votes in its blocks. Skipped leader slots count against it. Shown once the validator has had 40 leader slots this epoch; until then its score uses voting success."
                                     value={this.renderSuccessValue(this.props.validator.inclusion_success)}
                                     score={this.renderSuccessScore(this.props.validator.inclusion_success_score)}
                                     addPercent={this.props.validator.inclusion_success_score!=null}
