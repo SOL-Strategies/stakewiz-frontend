@@ -60,10 +60,38 @@ function WizScoreRow(props) {
 class WizScoreBody extends React.Component<{
     validator: validatorI;
 },
-{}> {
-    
+{
+    info_weight: number;
+}> {
+    constructor(props) {
+        super(props);
+        this.state = {
+            info_weight: undefined
+        };
+    }
+
+    componentDidMount() {
+        this.getInfoWeight();
+    }
+
+    getInfoWeight() {
+        axios(API_URL+config.API_ENDPOINTS.weightings, {
+            headers: {'Content-Type':'application/json'}
+        })
+            .then(response => {
+            this.setState({
+                info_weight: response.data.info_weight
+                });
+            })
+            .catch(e => {
+            console.log(e);
+            })
+    }
+
     renderInfoCount() {
-        return (this.props.validator.info_score)
+        // info_score is a percentage; each of the 5 items is worth an equal share of info_weight
+        if(!this.state.info_weight) return '-';
+        return Math.round(this.props.validator.info_score / (this.state.info_weight*100/5));
     }
 
     renderWithdrawAuthorityValue() {
@@ -73,6 +101,14 @@ class WizScoreBody extends React.Component<{
         else {
             return 'Set to validator identity (security risk)';
         }
+    }
+
+    renderSuccessValue(value: number | null) {
+        return (value==null) ? 'N/A' : Number(value).toFixed(2)+'%';
+    }
+
+    renderSuccessScore(score: number | null) {
+        return (score==null) ? 'N/A' : score;
     }
 
     renderSuperminorityValue() {
@@ -173,6 +209,26 @@ class WizScoreBody extends React.Component<{
                                 </tr>
                             </thead>
                             <tbody>
+                                <WizScoreRow
+                                    label='Voting Success'
+                                    tooltip="Share of the optimal voting rewards the validator earned this epoch: how reliably its votes landed in the vote aggregates. Capped at 100%."
+                                    value={this.renderSuccessValue(this.props.validator.voting_success)}
+                                    score={this.renderSuccessScore(this.props.validator.voting_success_score)}
+                                    addPercent={this.props.validator.voting_success_score!=null}
+                                    threshold='0'
+                                    color='green'
+                                    sign={(this.props.validator.voting_success_score!=null) ? '+' : undefined}
+                                /> 
+                                <WizScoreRow
+                                    label='Inclusion Success'
+                                    tooltip="Share of the optimal leader vote rewards the validator earned this epoch by including other validators' votes in its blocks. Skipped leader slots count against it. Shown once the validator has had 40 leader slots this epoch; until then its score uses voting success."
+                                    value={this.renderSuccessValue(this.props.validator.inclusion_success)}
+                                    score={this.renderSuccessScore(this.props.validator.inclusion_success_score)}
+                                    addPercent={this.props.validator.inclusion_success_score!=null}
+                                    threshold='0'
+                                    color='green'
+                                    sign={(this.props.validator.inclusion_success_score!=null) ? '+' : undefined}
+                                /> 
                                 <WizScoreRow
                                     label='Slot Skip Rate'
                                     tooltip="Percentage of leader slots in which this validator failed to produce a block. Score is ignored for low-staked validators."

@@ -6,9 +6,10 @@ import WizEmblem from '../../public/images/emblem.svg'
 
 export const Gauges: FC<{
     skip_rate: number, 
+    vote_success: number,
     wiz_score: number, 
     uptime: number }> = ({
-        skip_rate, wiz_score, uptime
+        skip_rate, vote_success, wiz_score, uptime
     }) => {
 
 
@@ -17,6 +18,10 @@ export const Gauges: FC<{
         ["Skip Rate", {v: skip_rate, f: skip_rate.toFixed(1)+'%'}]
         
     ];
+    let voteSuccessGauge = [
+        ["Label", "Value"],
+        ["Vote Success", {v: vote_success, f: vote_success.toFixed(1)+'%'}]
+    ]
     let wizScoreGauge = [
         ["Label", "Value"],
         ["Wiz Score", {v: wiz_score, f: wiz_score.toFixed(1)+'%'}]
@@ -63,6 +68,35 @@ export const Gauges: FC<{
                         </div>
                         <div>
                             Skip rate
+                        </div>
+                    </div>
+                    <div className='flex-grow-1 d-flex flex-column align-items-center'>
+                        <div>
+                            <GaugeComponent id='gauge-chart-vote-success' 
+                                type="semicircle"
+                                arc={{
+                                    cornerRadius: 0,
+                                    width:0.15,
+                                    subArcs: [
+                                        {
+                                            limit: (vote_success>=100) ? 99.999 : (vote_success>95) ? (vote_success-95)*20 : 0,
+                                            color: '#55bb55',
+                                            
+                                        },
+                                        {
+                                            limit: 100,
+                                            color:'#bb5555',
+                                        }
+                                    ]
+                                }}
+                                value={vote_success} 
+                                pointer={{hide:true}}
+                                style={chartStyle}
+                                labels={{tickLabels:{hideMinMax:true}, valueLabel: {formatTextValue: (value) => value+' %', style: { fontSize: '30px'}}}}
+                            />
+                        </div>
+                        <div>
+                            Vote success
                         </div>
                     </div>
                 </div>

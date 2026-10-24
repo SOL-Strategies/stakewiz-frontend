@@ -11,6 +11,7 @@ export interface validatorI {
     version: string;
     delinquent: boolean;
     skip_rate: number;
+    wiz_skip_rate: number;
     created_at: string;
     updated_at: string;
     oldest_active_stake_pubkey: string;
@@ -25,7 +26,7 @@ export interface validatorI {
     gossip_ip: string;
     mod: boolean;
     is_jito: boolean;
-    jito_commission_bps;
+    jito_commission_bps: number;
     admin_comment: string|null;
     ip_latitude: string;
     ip_longitude: string;
@@ -38,9 +39,14 @@ export interface validatorI {
     ignore: boolean;
     vote_success: number;
     vote_success_score: number;
+    voting_success: number | null;
+    voting_success_score: number;
+    inclusion_success: number | null;
+    inclusion_success_score: number;
     skip_rate_score: number;
     info_score: number;
     commission_score: number;
+    wizscore_commission: number;
     first_epoch_distance: number;
     epoch_distance_score: number;
     stake_weight: number;
@@ -68,8 +74,10 @@ export interface validatorI {
     asncity_concentration: number;
     asncity_concentration_score: number;
     stake_ratio: number;
-    credit_ratio: number;
-    apy_estimate: number;
+    /** @deprecated always null; use vote_success */
+    credit_ratio: null;
+    /** @deprecated always null; use staking_apy */
+    apy_estimate: null;
     rank: number;
     updateTitle: Function;
     userPubkey: string;
