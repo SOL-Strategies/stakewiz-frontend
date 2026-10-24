@@ -6,6 +6,18 @@ import WizEmblem from '../../public/images/emblem.svg'
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { BLOCK_PRODUCTION_MAX, BLOCK_PRODUCTION_INSUFFICIENT, blockProductionColor as getBlockProductionColor, networkSpreadColor as getNetworkSpreadColor } from './common';
 
+const GAUGE_FONT_SIZE = 30;
+
+// Percentage with up to `decimals` places, dropping trailing zeros (112.0 -> 112)
+const formatPercent = (n: number, decimals: number) => parseFloat(n.toFixed(decimals)).toString()+' %';
+
+// react-gauge-component scales the value text by 6/length once it is over 4 characters;
+// undo that so every gauge's value renders at the same size
+const valueLabel = (text: string) => ({
+    formatTextValue: () => text,
+    style: { fontSize: (GAUGE_FONT_SIZE / ((text.length > 4) ? 6/text.length : 1))+'px' }
+});
+
 export const Gauges: FC<{
     block_production: number | null,
     block_production_p10: number | null,
@@ -75,7 +87,7 @@ export const Gauges: FC<{
                                 value={(block_production==null) ? 0 : Math.min(block_production, blockProductionMax)} 
                                 pointer={{hide:true}}
                                 style={chartStyle}
-                                labels={{tickLabels:{hideMinMax:true}, valueLabel: {formatTextValue: () => (block_production==null) ? '—' : block_production.toFixed(1)+' %', style: { fontSize: '30px'}}}}
+                                labels={{tickLabels:{hideMinMax:true}, valueLabel: valueLabel((block_production==null) ? '—' : formatPercent(block_production, 1))}}
                             />
                         </div>
                         </OverlayTrigger>
@@ -117,7 +129,7 @@ export const Gauges: FC<{
                                 value={vote_success} 
                                 pointer={{hide:true}}
                                 style={chartStyle}
-                                labels={{tickLabels:{hideMinMax:true}, valueLabel: {formatTextValue: (value) => value+' %', style: { fontSize: '30px'}}}}
+                                labels={{tickLabels:{hideMinMax:true}, valueLabel: valueLabel(formatPercent(vote_success, 1))}}
                             />
                         </div>
                         <div>
@@ -159,7 +171,7 @@ export const Gauges: FC<{
                                 value={wiz_score} 
                                 pointer={{hide:true}}
                                 style={chartStyle}
-                                labels={{tickLabels:{hideMinMax:true}, valueLabel: {formatTextValue: (value) => value+' %', style: { fontSize: '30px'}, maxDecimalDigits: 1}}}
+                                labels={{tickLabels:{hideMinMax:true}, valueLabel: valueLabel(formatPercent(wiz_score, 1))}}
                             />
                         </div>
                         <div>
@@ -188,7 +200,7 @@ export const Gauges: FC<{
                                 value={uptime} 
                                 pointer={{hide:true}}
                                 style={chartStyle}
-                                labels={{tickLabels:{hideMinMax:true}, valueLabel: {formatTextValue: (value) => value+' %', style: { fontSize: '30px'}}}}
+                                labels={{tickLabels:{hideMinMax:true}, valueLabel: valueLabel(formatPercent(uptime, 2))}}
                             />
                         </div>
                         <div>
