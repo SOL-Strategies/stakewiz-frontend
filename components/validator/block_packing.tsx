@@ -7,8 +7,8 @@ import { ValidatorBlockStatsI, ClusterBlockStatsI } from './interfaces';
 
 const API_URL = process.env.API_BASE_URL;
 
-// Capture indexes are noisy below this many blocks in an epoch
-const MIN_BLOCKS = 50;
+// Capture indexes are noisy below this many blocks in an epoch (the API's per-validator threshold)
+const MIN_BLOCKS = 12;
 // Tip data is only complete from this epoch
 const FIRST_TIPS_EPOCH = 1067;
 const EPOCHS = 10;
