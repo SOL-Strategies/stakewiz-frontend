@@ -7,7 +7,7 @@ import {Alert, AlertForm} from './alert';
 import Link from 'next/link';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import {ConditionalWrapper, getClusterStats, Spinner} from './common'
-import { StakeLabel, RenderUrl, RenderImage, RenderName } from './validator/common'
+import { StakeLabel, RenderUrl, RenderImage, RenderName, BLOCK_PRODUCTION_MAX, BLOCK_PRODUCTION_INSUFFICIENT, blockProductionColor } from './validator/common'
 import { validatorI, ValidatorBoxPropsI, ValidatorListI, ValidatorListingI } from './validator/interfaces'
 import { MultiStakeDialog } from './stake/multi-stake';
 import { ValidatorContext } from './validator/validatorhook'
@@ -503,23 +503,31 @@ const ValidatorBox: FC<ValidatorBoxPropsI> = ({validator,clusterStats,showWizMod
                     placement="bottom"
                     overlay={
                         <Tooltip>
-                            Skip rate (lower is better)
+                            {(validator.block_production==null) ? BLOCK_PRODUCTION_INSUFFICIENT : (
+                                <>
+                                    Block packing (higher is better): fee capture &times; share of leader slots produced this epoch.
+                                    {(validator.block_production_median!=null) ? <><br />Network median {validator.block_production_median.toFixed(1)}%</> : null}
+                                </>
+                            )}
                         </Tooltip>
-                    } 
+                    }
                 >
                     <div className={'bg-wizlight rounded text-center flex-grow-1 m-1'+(showListView?' w-70':'')}>
                         <div className='p-2'>
-                            {validator.skip_rate.toFixed(1)}%
+                            {(validator.block_production==null) ? '—' : validator.block_production.toFixed(1)+'%'}
                         </div>
                         <div>
-                            
+
                                 <i className='bi bi-box'></i>
-                            
+
                         </div>
-                        <div className="progress bg-semidark" style={{height: '2px'}}>                        
-                            <div className="progress-bar bg-warning" role="progressbar" aria-valuenow={validator.skip_rate} aria-valuemin={0} aria-valuemax={100} style={{width: validator.skip_rate+'%'}}>
-                            </div>                    
-                        </div>                
+                        <div className="progress bg-semidark" style={{height: '2px'}}>
+                            <div className="progress-bar" role="progressbar" aria-valuenow={validator.block_production ?? 0} aria-valuemin={0} aria-valuemax={BLOCK_PRODUCTION_MAX} style={{
+                                width: ((validator.block_production==null) ? 100 : Math.min(validator.block_production, BLOCK_PRODUCTION_MAX)/BLOCK_PRODUCTION_MAX*100)+'%',
+                                backgroundColor: blockProductionColor(validator.block_production, validator.block_production_p10, validator.block_production_median)
+                            }}>
+                            </div>
+                        </div>
                     </div>
                 </OverlayTrigger>
                 <OverlayTrigger

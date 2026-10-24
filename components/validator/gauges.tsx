@@ -4,6 +4,7 @@ const GaugeComponent = dynamic(() => import('react-gauge-component'), { ssr: fal
 const GaugeChart = dynamic(() => import('react-gauge-chart'), { ssr: false });
 import WizEmblem from '../../public/images/emblem.svg'
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { BLOCK_PRODUCTION_MAX, BLOCK_PRODUCTION_INSUFFICIENT, blockProductionColor as getBlockProductionColor } from './common';
 
 export const Gauges: FC<{
     block_production: number | null,
@@ -15,17 +16,9 @@ export const Gauges: FC<{
         block_production, block_production_p10, block_production_median, vote_success, wiz_score, uptime
     }) => {
 
-    // Block production can exceed 100% (a better than typical block in every leader slot)
-    const blockProductionMax = 125;
-    const blockProductionInsufficient = 'Insufficient leader slots in current epoch, data shown after 12 leader slots';
-    let blockProductionColor = '#55bb55';
-    // Null below 12 blocks produced this epoch: grey out the whole gauge
-    if(block_production==null) {
-        blockProductionColor = '#555555';
-    }
-    else if(block_production_median!=null && block_production < block_production_median) {
-        blockProductionColor = (block_production_p10!=null && block_production < block_production_p10) ? '#bb5555' : '#ddaa33';
-    }
+    const blockProductionMax = BLOCK_PRODUCTION_MAX;
+    const blockProductionInsufficient = BLOCK_PRODUCTION_INSUFFICIENT;
+    const blockProductionColor = getBlockProductionColor(block_production, block_production_p10, block_production_median);
 
     let voteSuccessGauge = [
         ["Label", "Value"],

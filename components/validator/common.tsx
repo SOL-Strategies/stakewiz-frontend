@@ -4,6 +4,22 @@ import Image from "next/legacy/image";
 import { validatorI } from "./interfaces";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
 
+// block_production can exceed 100% (a better than typical block in every leader slot)
+export const BLOCK_PRODUCTION_MAX = 125;
+export const BLOCK_PRODUCTION_INSUFFICIENT = 'Insufficient leader slots in current epoch, data shown after 12 leader slots';
+
+// Green at or above the network median, amber below it, red below p10, grey when null (under 12 leader slots)
+export const blockProductionColor = (
+    block_production: number | null,
+    block_production_p10: number | null,
+    block_production_median: number | null
+) => {
+    if(block_production==null) return '#555555';
+    if(block_production_p10!=null && block_production < block_production_p10) return '#bb5555';
+    if(block_production_median!=null && block_production < block_production_median) return '#ddaa33';
+    return '#55bb55';
+}
+
 export const StakeLabel: FC<{stake: number}> = ({stake}) => {
     
     if(stake!=null) {
