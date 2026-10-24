@@ -15,6 +15,7 @@ import { StakeDialog } from '../stake/single-stake';
 import { getCommissionHistory, getJitoCommissionHistory } from '../stake/common';
 import { CommissionHistoryI, JitoCommissionHistoryI } from '../stake/interfaces';
 import * as browser from '../../lib/browser';
+import { VoteSuccessChart } from './vote_success';
 import { SkipRateChart } from './skip_rate';
 
 const API_URL = process.env.API_BASE_URL;
@@ -604,6 +605,29 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                             <div className='validator-detail-flex-opacity-bg'></div>
                             <div className='card text-light'>
                                 <div className='card-header'>
+                                    Vote Success
+                                    <OverlayTrigger
+                                        placement="bottom"
+                                        overlay={
+                                            <Tooltip>
+                                                Last 2000 observations of vote success rate taken during our Wiz Score snapshots, approximately every five minutes. Vote Success is the percentage of total elapsed slot in the epoch that the validator has voted on.
+                                            </Tooltip>
+                                        } 
+                                    >
+                                        <i className='bi bi-info-circle ms-2'></i>
+                                    </OverlayTrigger>
+                                </div>
+                                <div className='card-body'>
+                                    <VoteSuccessChart
+                                        vote_identity={this.state.validator.vote_identity}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div className='flex-grow-1 m-1 validator-detail-flex-card'>
+                            <div className='validator-detail-flex-opacity-bg'></div>
+                            <div className='card text-light'>
+                                <div className='card-header'>
                                     Skip Rate
                                     <OverlayTrigger
                                         placement="bottom"
@@ -627,17 +651,6 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                             <div className='validator-detail-flex-opacity-bg'></div>
                             <div className='card text-light'>
                                 <div className='card-header'>
-                                    Commission History
-                                </div>
-                                <div className='card-body'>
-                                    {this.renderCommissionTable()}
-                                </div>
-                            </div>
-                        </div>
-                        <div className='flex-grow-1 m-1 validator-detail-flex-card'>
-                            <div className='validator-detail-flex-opacity-bg'></div>
-                            <div className='card text-light'>
-                                <div className='card-header'>
                                     Scorecard
                                 </div>
                                 <div className='card-body validator-detail-scorecard'>
@@ -649,6 +662,14 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                         </div>
                         <div className='flex-grow-1 m-1 validator-detail-flex-card'>
                             <div className='validator-detail-flex-opacity-bg'></div>
+                            <div className='card text-light'>
+                                <div className='card-header'>
+                                    Commission History
+                                </div>
+                                <div className='card-body'>
+                                    {this.renderCommissionTable()}
+                                </div>
+                            </div>
                             <div className='card text-light'>
                                 <div className='card-header'>
                                     Jito MEV Commission History
