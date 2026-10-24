@@ -495,7 +495,7 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                                                         placement="bottom"
                                                         overlay={
                                                             <Tooltip>
-                                                                10-epoch cluster-median Jito MEV APY
+                                                                10-epoch median Jito MEV APY for this validator
                                                             </Tooltip>
                                                         } 
                                                     >

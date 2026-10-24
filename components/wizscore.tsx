@@ -193,7 +193,7 @@ class WizScoreBody extends React.Component<{
                                 /> 
                                 <WizScoreRow
                                     label='Inclusion Success'
-                                    tooltip="Percentage of the validator's votes included on chain this epoch. Not available for low-stake validators without enough data."
+                                    tooltip="Percentage of other validators' votes that this validator included in the blocks it produced this epoch. Not available for validators without enough leader slots."
                                     value={this.renderSuccessValue(this.props.validator.inclusion_success)}
                                     score={this.renderSuccessScore(this.props.validator.inclusion_success_score)}
                                     addPercent={this.props.validator.inclusion_success_score!=null}
