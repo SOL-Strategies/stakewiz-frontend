@@ -27,6 +27,8 @@ const RANK_COLORS: {[rank in BlockRank]: string} = {
 interface LiveSlotI {
     slot: number;
     skipped: boolean;
+    // Passed while the stream was paused or reconnecting, so not watched
+    missed?: boolean;
     time?: number;
     leader?: string;
     feeReward?: number;
@@ -39,6 +41,14 @@ interface PerformanceI {
     tps: number;
     slotMs: number;
 }
+
+const LegendItem: FC<{dot: CSSProperties, label: string, tooltip: string}> = ({dot, label, tooltip}) => (
+    <OverlayTrigger placement='bottom' overlay={<Tooltip>{tooltip}</Tooltip>}>
+        <span className='network-legend-item'>
+            <span className='network-legend-dot' style={dot}></span>{label}
+        </span>
+    </OverlayTrigger>
+);
 
 const rpc = async (method: string, params: any[] = []) => {
     const response = await fetch(config.PUBLIC_RPC_HTTP, {
@@ -118,6 +128,12 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
             const slot: number = value.slot;
             if(lastSlot.current!=null && slot <= lastSlot.current) return;
             loadSchedule(slot);
+            // Slots up to this block's parent that we never saw (tab hidden, reconnecting): not watched, capped to a strip's worth
+            if(lastSlot.current!=null && block.parentSlot > lastSlot.current) {
+                for(let s = Math.max(lastSlot.current + 1, block.parentSlot + 1 - MAX_SLOTS); s <= block.parentSlot; s++) {
+                    pending.current.push({slot: s, skipped: false, missed: true, leader: leaderOf(s)});
+                }
+            }
             // Slots between the parent and this block had no block: skipped
             const from = Math.max(block.parentSlot + 1, (lastSlot.current ?? block.parentSlot) + 1);
             for(let s = from; s < slot; s++) {
@@ -167,7 +183,6 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
                 setStatus('paused');
             }
             else {
-                lastSlot.current = null;
                 setStatus('connecting');
                 connect();
             }
@@ -179,7 +194,7 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
             pending.current = [];
             setSlots((current) => [...[...batch].reverse(), ...current].slice(0, MAX_SLOTS));
             setTotals((t) => ({
-                blocks: t.blocks + batch.filter((r) => !r.skipped).length,
+                blocks: t.blocks + batch.filter((r) => !r.skipped && !r.missed).length,
                 skipped: t.skipped + batch.filter((r) => r.skipped).length,
                 fees: t.fees + batch.reduce((sum, r) => sum + (r.feeReward || 0), 0)
             }));
@@ -211,12 +226,12 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
         }
     }, []);
 
-    // Group consecutive slots by leader (leaders get windows of consecutive slots)
-    let groups: {leader: string, slots: LiveSlotI[]}[] = [];
+    // Group consecutive slots by leader (leaders get windows of consecutive slots), keeping unwatched slots apart
+    let groups: {leader: string, missed: boolean, slots: LiveSlotI[]}[] = [];
     for(const s of slots) {
         const last = groups[groups.length - 1];
-        if(last && last.leader === s.leader) last.slots.push(s);
-        else groups.push({leader: s.leader, slots: [s]});
+        if(last && last.leader === s.leader && last.missed === !!s.missed) last.slots.push(s);
+        else groups.push({leader: s.leader, missed: !!s.missed, slots: [s]});
     }
 
     // The next leader window after the latest slot, from the schedule
@@ -240,6 +255,13 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
         if(v?.name) return v.name;
         return (identity) ? identity.slice(0, 4)+'…'+identity.slice(-4) : 'Unknown leader';
     }
+
+    const missedTooltip = (identity: string, groupSlots: LiveSlotI[]) => (
+        <Tooltip>
+            {(identity) ? <div className='fw-bold'>{nameFor(identity)}</div> : null}
+            <div>{groupSlots.length} slots not watched: they passed while this tab was in the background or the stream was reconnecting.</div>
+        </Tooltip>
+    );
 
     const leaderTooltip = (identity: string, groupSlots: LiveSlotI[]) => {
         const v = validatorFor(identity);
@@ -287,10 +309,12 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
                 <span><span className='fw-bold' style={{color: COLORS.teal}}>{(performance) ? formatNumber(performance.tps) : '—'}</span> TPS</span>
                 <span><span className='fw-bold' style={{color: COLORS.red}}>{formatNumber(totals.skipped)}</span> skipped of {formatNumber(observed)} seen</span>
                 <span className='ms-auto text-secondary'>
-                    <span className='network-legend-dot' style={{background: RANK_COLORS.top}}></span>top half
-                    <span className='network-legend-dot' style={{background: RANK_COLORS.mid}}></span>below median
-                    <span className='network-legend-dot' style={{background: RANK_COLORS.low}}></span>bottom 10%
-                    <span className='network-legend-dot' style={{border: '2px dashed '+COLORS.red}}></span>skipped
+                    <LegendItem dot={{background: RANK_COLORS.top}} label='top half' tooltip='The fee reward this block earned its leader is at or above the median of all blocks seen in about the last 5 minutes.' />
+                    <LegendItem dot={{background: RANK_COLORS.mid}} label='below median' tooltip='The fee reward is below the median of blocks seen in about the last 5 minutes, but not in the bottom 10%.' />
+                    <LegendItem dot={{background: RANK_COLORS.low}} label='bottom 10%' tooltip='The fee reward is lower than 90% of blocks seen in about the last 5 minutes.' />
+                    <LegendItem dot={{border: '2px dashed '+COLORS.red}} label='skipped' tooltip='The leader did not produce a block in this slot.' />
+                    <LegendItem dot={{background: RANK_COLORS.warming}} label='not ranked yet' tooltip={'Blocks are ranked once '+RANK_MIN_BLOCKS+' blocks have been seen since the page opened.'} />
+                    <LegendItem dot={{border: '2px dashed '+UNKNOWN_COLOR}} label='not watched' tooltip='Slots that passed while this tab was in the background or the stream was reconnecting, so they were not streamed.' />
                 </span>
             </div>
             <div className='network-live-strip'>
@@ -303,16 +327,16 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
                     </div>
                 ) : null}
                 {(groups.length === 0) ? <div className='text-secondary small p-2'>Waiting for blocks…</div> : groups.map((g) => (
-                    <OverlayTrigger key={g.slots[g.slots.length - 1].slot} placement='bottom' overlay={leaderTooltip(g.leader, g.slots)}>
-                        <div className='network-leader-group'>
-                            <div className='network-leader-name'>{renderLeaderName(g.leader)}</div>
+                    <OverlayTrigger key={g.slots[g.slots.length - 1].slot} placement='bottom' overlay={(g.missed) ? missedTooltip(g.leader, g.slots) : leaderTooltip(g.leader, g.slots)}>
+                        <div className={'network-leader-group'+((g.missed) ? ' missed' : '')}>
+                            <div className='network-leader-name'>{(g.missed && !g.leader) ? 'Not watched' : renderLeaderName(g.leader)}</div>
                             <div className='d-flex gap-1'>
                                 {g.slots.map((s) => (
                                     <div
                                         key={s.slot}
-                                        className={'network-block'+((s.skipped) ? ' skipped' : '')}
+                                        className={'network-block'+((s.missed) ? ' missed' : (s.skipped) ? ' skipped' : '')}
                                         style={{'--block': RANK_COLORS[s.rank ?? 'warming']} as CSSProperties}
-                                        title={'Slot '+formatNumber(s.slot)+((s.skipped) ? ' · skipped' : (s.feeReward!=null) ? ' · ◎ '+(s.feeReward/1e9).toFixed(5)+' fees'+((s.ratio!=null) ? ' · '+s.ratio.toFixed(2)+'× median recent block' : ' · ranking after '+RANK_MIN_BLOCKS+' blocks') : '')}
+                                        title={'Slot '+formatNumber(s.slot)+((s.missed) ? ' · not watched' : (s.skipped) ? ' · skipped' : (s.feeReward!=null) ? ' · ◎ '+(s.feeReward/1e9).toFixed(5)+' fees'+((s.ratio!=null) ? ' · '+s.ratio.toFixed(2)+'× median recent block' : ' · ranking after '+RANK_MIN_BLOCKS+' blocks') : '')}
                                     ></div>
                                 ))}
                             </div>
