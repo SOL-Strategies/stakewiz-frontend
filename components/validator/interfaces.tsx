@@ -114,6 +114,7 @@ export interface WizWeightingsI {
     skip_rate_cutoff_multiplier: number;
     // 'rpc' (default), 'blocks' or 'block_production'
     skip_rate_source?: string;
+    skip_rate_cutoff_floor?: number;
     skip_rate_min_slots?: number;
     mev_weight?: number;
     mev_min_blocks?: number;
