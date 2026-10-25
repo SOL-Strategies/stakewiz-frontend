@@ -149,6 +149,8 @@ export interface clusterStatsI {
     vote_success?: PercentilesI | null;
     voting_success?: PercentilesI | null;
     inclusion_success?: PercentilesI | null;
+    // Current epoch to date (fractions); null briefly at the start of an epoch
+    block_stats?: ClusterBlockStatsI | null;
 };
 
 export interface ValidatorBoxPropsI {

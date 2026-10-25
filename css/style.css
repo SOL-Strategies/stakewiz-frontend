@@ -1108,3 +1108,20 @@ a:hover {
   .vlist-view .w-70{width: initial;}
   .vlist-view .validator-flex-logo.w-25{width: 50% !important;}
 }
+.network-card-full {
+  width:100%;
+}
+
+.network-stat-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(8rem, 1fr));
+  gap:0.5rem;
+}
+
+.network-stat-tile {
+  background-color:rgba(255, 255, 255, 0.08);
+}
+
+.network-live-table {
+  font-size:0.875rem;
+}
