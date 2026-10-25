@@ -50,6 +50,15 @@ export interface validatorI {
     skip_rate_score: number;
     info_score: number;
     commission_score: number;
+    // Wiz score components added for score version 84 (score fields are Wiz points in percent; tips in SOL)
+    mev_tips_per_block?: number | null;
+    mev_benchmark?: number | null;
+    mev_score?: number;
+    mev_ignored?: boolean;
+    wiz_fee_capture_index?: number | null;
+    fee_capture_benchmark?: number | null;
+    fee_capture_score?: number;
+    fee_capture_ignored?: boolean;
     wizscore_commission: number;
     first_epoch_distance: number;
     epoch_distance_score: number;
@@ -92,6 +101,41 @@ export interface validatorI {
     total_apy: number;
     bls_pubkey: string;
 };
+
+// /wiz_score weightings for the active score version; absent keys mean 0 or the default
+export interface WizWeightingsI {
+    score_version: number;
+    vote_success_weight?: number;
+    vote_success_cutoff?: number;
+    voting_success_weight?: number;
+    inclusion_success_weight?: number;
+    skip_rate_weight: number;
+    skip_rate_min_stake: number;
+    skip_rate_cutoff_multiplier: number;
+    // 'rpc' (default), 'blocks' or 'block_production'
+    skip_rate_source?: string;
+    skip_rate_min_slots?: number;
+    mev_weight?: number;
+    mev_min_blocks?: number;
+    mev_min_validators?: number;
+    commission_weight: number;
+    max_commission: number;
+    info_weight: number;
+    epoch_distance_max: number;
+    epoch_distance_weight: number;
+    stake_weight_threshold: number;
+    stake_weight_weight: number;
+    uptime_weight: number;
+    uptime_cutoff: number;
+    min_versions: string[];
+    invalid_version_penalty: number;
+    withdraw_authority_penalty: number;
+    asn_concentration_weight: number;
+    city_concentration_weight: number;
+    asn_city_concentration_weight: number;
+    tpu_ip_concentration_weight: number;
+    superminority_penalty: number;
+}
 
 export interface clusterStatsI {
     avg_credit_ratio: number;
