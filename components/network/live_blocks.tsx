@@ -226,11 +226,15 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
         }
     }, []);
 
-    // Group consecutive slots by leader (leaders get windows of consecutive slots), keeping unwatched slots apart
+    // Group consecutive slots by leader (leaders get windows of consecutive slots); a group is
+    // marked missed only when none of its slots were watched
     let groups: {leader: string, missed: boolean, slots: LiveSlotI[]}[] = [];
     for(const s of slots) {
         const last = groups[groups.length - 1];
-        if(last && last.leader === s.leader && last.missed === !!s.missed) last.slots.push(s);
+        if(last && last.leader === s.leader) {
+            last.slots.push(s);
+            last.missed = last.missed && !!s.missed;
+        }
         else groups.push({leader: s.leader, missed: !!s.missed, slots: [s]});
     }
 
@@ -265,7 +269,9 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
 
     const leaderTooltip = (identity: string, groupSlots: LiveSlotI[]) => {
         const v = validatorFor(identity);
-        const produced = groupSlots.filter((s) => !s.skipped);
+        const produced = groupSlots.filter((s) => !s.skipped && !s.missed);
+        const skipped = groupSlots.filter((s) => s.skipped).length;
+        const notWatched = groupSlots.filter((s) => s.missed).length;
         const fees = produced.reduce((sum, s) => sum + (s.feeReward || 0), 0);
         const ratios = produced.filter((s) => s.ratio!=null).map((s) => s.ratio);
         const averageRatio = (ratios.length > 0) ? ratios.reduce((sum, r) => sum + r, 0)/ratios.length : null;
@@ -279,7 +285,7 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
                         <div>Vote success {v.vote_success.toFixed(1)}%</div>
                     </>
                 ) : <div>Not in the Stakewiz validator list</div>}
-                <div>{produced.length} blocks, {groupSlots.length - produced.length} skipped · ◎ {(fees/1e9).toFixed(4)} fees</div>
+                <div>{produced.length} blocks, {skipped} skipped{(notWatched > 0) ? ', '+notWatched+' not watched' : ''} · ◎ {(fees/1e9).toFixed(4)} fees</div>
                 {(averageRatio!=null) ? <div>These blocks: {averageRatio.toFixed(2)}× the median recent block</div> : null}
             </Tooltip>
         );
