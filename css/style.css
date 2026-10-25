@@ -1314,6 +1314,11 @@ a:hover {
   position:relative;
 }
 
+/* Lift the live blocks card above the cards after it so its block popover is not painted underneath them */
+.validator-detail-flex-card.network-card-raised {
+  z-index:20;
+}
+
 .network-block.selected {
   transform:translateY(-3px) scale(1.15);
   outline:2px solid #fff;
@@ -1327,8 +1332,10 @@ a:hover {
   max-width:100%;
   padding:0.75rem 0.85rem;
   border-radius:0.6rem;
-  background:#1d1f22;
-  border:1px solid rgba(255, 255, 255, 0.2);
+  background-color:#1d1f22;
+  opacity:1;
+  isolation:isolate;
+  border:1px solid #4a4d52;
   box-shadow:0 0.75rem 2rem rgba(0, 0, 0, 0.6);
   animation:network-card-in 0.15s ease-out;
 }

@@ -351,7 +351,7 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
     const observed = totals.blocks + totals.skipped;
 
     return (
-        <NetworkCard title='Live blocks' tooltip='Confirmed blocks streamed from a public Solana RPC as they are produced, grouped by leader. Each block is ranked as it arrives by the fee reward it earned its leader, against every block seen in about the last 5 minutes. Hover a block to pause the stream and see its details.' full={true}>
+        <NetworkCard title='Live blocks' tooltip='Confirmed blocks streamed from a public Solana RPC as they are produced, grouped by leader. Each block is ranked as it arrives by the fee reward it earned its leader, against every block seen in about the last 5 minutes. Hover a block to pause the stream and see its details.' full={true} className='network-card-raised'>
             <div className='d-flex flex-wrap align-items-center gap-3 small mb-1'>
                 {(selected && status === 'live') ? <span className='badge bg-info text-dark'>❚❚ Paused while hovering</span> : statusBadge}
                 <span>Slot <span className='fw-bold' style={{color: COLORS.cyan}}>{(latest) ? formatNumber(latest) : '—'}</span></span>

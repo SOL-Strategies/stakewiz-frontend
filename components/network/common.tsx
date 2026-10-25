@@ -52,9 +52,9 @@ export const InfoTip: FC<{text: string}> = ({text}) => (
     </OverlayTrigger>
 );
 
-export const NetworkCard: FC<{title: string, tooltip?: string, full?: boolean, children: ReactNode}> = ({title, tooltip, full, children}) => {
+export const NetworkCard: FC<{title: string, tooltip?: string, full?: boolean, className?: string, children: ReactNode}> = ({title, tooltip, full, className, children}) => {
     return (
-        <div className={'flex-grow-1 m-1 validator-detail-flex-card'+((full) ? ' network-card-full' : '')}>
+        <div className={'flex-grow-1 m-1 validator-detail-flex-card'+((full) ? ' network-card-full' : '')+((className) ? ' '+className : '')}>
             <div className='validator-detail-flex-opacity-bg'></div>
             <div className='card text-light'>
                 <div className='card-header'>
