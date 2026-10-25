@@ -162,7 +162,8 @@ class WizScoreBody extends React.Component<{
     blockProductionTooltip() {
         const w = this.state.weightings;
         const benchmark = (this.props.validator.fee_capture_benchmark!=null) ? ' ('+this.props.validator.fee_capture_benchmark.toFixed(2)+')' : '';
-        return "Producing blocks and packing them well. Score = skip score × fee capture score. Skip score falls linearly from full at 0% skipped to 0 at "+w.skip_rate_cutoff_multiplier+"× the network skip rate this epoch. Fee capture score = this validator's fee capture index ÷ the network p90"+benchmark+", capped at 1. A validator that skips all its leader slots scores 0. Scored from 12 leader slots. Skips are penalised more heavily in the Wiz score than in the Block Packing gauge.";
+        const cutoff = (w.skip_rate_cutoff_floor) ? w.skip_rate_cutoff_floor+"% or "+w.skip_rate_cutoff_multiplier+"× the network skip rate this epoch, whichever is higher" : w.skip_rate_cutoff_multiplier+"× the network skip rate this epoch";
+        return "Producing blocks and packing them well. Score = skip score × fee capture score. Skip score falls linearly from full at 0% skipped to 0 at "+cutoff+". Fee capture score = this validator's fee capture index ÷ the network p90"+benchmark+", capped at 1. A validator that skips all its leader slots scores 0. Until the validator has had 12 leader slots this epoch, its previous epoch's figures are used. Skips are penalised more heavily in the Wiz score than in the Block Packing gauge.";
     }
 
     renderMevValue() {
@@ -207,7 +208,7 @@ class WizScoreBody extends React.Component<{
                 <WizScoreRow
                     key='block-production-ignored'
                     label='Block production ignored'
-                    tooltip='Ignored when the validator has had fewer than 12 leader slots this epoch, or early in the epoch before network benchmarks exist. Its weight is then removed and the rest of the score scaled up to compensate.'
+                    tooltip='Ignored only when the validator has had fewer than 12 leader slots both this epoch and last epoch. Its weight is then removed and the rest of the score scaled up to compensate.'
                     value={(v.skip_rate_ignored) ? 'Yes' : 'No'}
                     score={(v.skip_rate_ignored) ? 'scaled up' : 'N/A'}
                     addPercent={false}
@@ -222,7 +223,7 @@ class WizScoreBody extends React.Component<{
                 <WizScoreRow
                     key='mev'
                     label='MEV'
-                    tooltip="Jito tips per produced block this epoch, net of the validator's MEV commission, against the 90th percentile of Jito validators, capped at 100%. Only for validators running Jito with a MEV commission set and at least 12 blocks with tips this epoch; for everyone else the weight is removed and the score scaled up."
+                    tooltip="Jito tips per produced block this epoch, net of the validator's MEV commission, against the 90th percentile of Jito validators, capped at 100%. Only for validators running Jito with a MEV commission set and at least 12 blocks with tips this epoch (or last epoch, whose figures are then used); for everyone else the weight is removed and the score scaled up."
                     value={this.renderMevValue()}
                     score={(v.mev_ignored) ? 'scaled up' : v.mev_score}
                     addPercent={!v.mev_ignored}
@@ -669,12 +670,13 @@ class WizScoreWeightings extends React.Component<{},
                                 </td>
                                 <td>
                                     {(skipRateSource && skipRateSource!=='rpc') ? (
-                                        <>The network skip rate this epoch (total skipped ÷ total leader slots) × this multiplier is the skip rate that scores 0.</>
+                                        <>The network skip rate this epoch (total skipped ÷ total leader slots) × this multiplier is the skip rate that scores 0{(this.state.weightings.skip_rate_cutoff_floor) ? <>, or the cutoff floor if that is higher</> : null}.</>
                                     ) : (
                                         <>Cluster average * this multiplier gives us the value which has a 0 score. If the average skip rate is 5% and the multiplier is 2, then a 10% skip rate or above will have a score of 0, and anything below 10% will have a score higher than 0.</>
                                     )}
                                 </td>
                             </tr>
+                            {this.renderOptionalRow('skip_rate_cutoff_floor', 'Skip rate cutoff floor', 'The skip rate (%) that scores 0 is never lower than this.')}
                             {this.renderOptionalRow('skip_rate_source', 'Skip rate source', 'rpc (default): RPC skip rate vs the mean. blocks: block-index skip rate vs the network rate. block_production: block skip score × fee capture score.')}
                             {this.renderOptionalRow('skip_rate_min_slots', 'Skip rate min slots', 'Leader slots needed this epoch before the skip rate is scored.')}
                             {this.renderOptionalRow('mev_weight', 'MEV weight', 'Net Jito tips per block vs the p90 of Jito validators. Non-Jito validators are excluded and their score rescaled.')}
