@@ -253,7 +253,7 @@ export const StakeDialog: FC<{
                                 {parseFloat(validator.vote_success.toFixed(1))} %
                             </div>
                             <div>
-                                Vote Success
+                                Vote success
                             </div>
                         </div>
                         <div className='col'>
