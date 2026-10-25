@@ -6,6 +6,9 @@ import { nakamotoCoefficient, STAKE_THRESHOLDS } from './current_epoch';
 
 const TOP_GROUPS = 8;
 
+// Chart cell for a stake share, shown as a percentage in tooltips
+const shareValue = (share: number) => ({v: share, f: (share*100).toFixed(1)+'%'});
+
 // Share of active stake per group, largest first, with the remainder as 'Other'
 const stakeShares = (validators: validatorI[], key: (v: validatorI) => string, totalStake: number, top = TOP_GROUPS) => {
     let groups: {[k: string]: number} = {};
@@ -25,7 +28,7 @@ const Donut: FC<{rows: [string, number][], label: string}> = ({rows, label}) => 
         chartType='PieChart'
         width="100%"
         height="16rem"
-        data={[[label, 'Stake share'], ...rows]}
+        data={[[label, 'Stake share'], ...rows.map(([k, share]) => [k, shareValue(share)])]}
         options={chartOptions({
             pieHole: 0.55,
             legend: { position: 'right', alignment: 'center', textStyle: { color: '#fff', fontSize: 11 } },
@@ -33,6 +36,7 @@ const Donut: FC<{rows: [string, number][], label: string}> = ({rows, label}) => 
             pieSliceText: 'percentage',
             pieSliceTextStyle: { color: '#111', fontSize: 10 },
             sliceVisibilityThreshold: 0,
+            tooltip: { text: 'percentage', textStyle: { color: '#222' } },
             chartArea: { top: 10, left: 10, width: '95%', height: '88%' }
         })}
     />
@@ -43,7 +47,7 @@ const ShareBars: FC<{rows: [string, number][], label: string, color: string}> = 
         chartType='BarChart'
         width="100%"
         height="16rem"
-        data={[[label, 'Stake share', {role: 'style'}], ...rows.map(([k, share], i) => [k, share, 'color: '+((k === 'Other') ? COLORS.grey : color)+'; opacity: '+((i < 3) ? 1 : 0.65)])]}
+        data={[[label, 'Stake share', {role: 'style'}], ...rows.map(([k, share], i) => [k, shareValue(share), 'color: '+((k === 'Other') ? COLORS.grey : color)+'; opacity: '+((i < 3) ? 1 : 0.65)])]}
         options={chartOptions({
             hAxis: { format: 'percent', gridlines: { color: '#3a3a3a' }, textStyle: { color: '#fff' }, minValue: 0 },
             vAxis: { textStyle: { color: '#fff', fontSize: 11 } },
