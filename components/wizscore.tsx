@@ -77,9 +77,14 @@ class WizScoreBody extends React.Component<{
         this.getWeightings();
     }
 
-    // Weightings for the active score version; they switch at the same moment as the scores
+    componentDidUpdate(prevProps) {
+        if(prevProps.validator.score_version !== this.props.validator.score_version) this.getWeightings();
+    }
+
+    // Weightings for the version this validator's score was calculated with (/wiz_score/{version})
     getWeightings() {
-        axios(API_URL+config.API_ENDPOINTS.weightings, {
+        const version = this.props.validator.score_version;
+        axios(API_URL+config.API_ENDPOINTS.weightings+((version) ? '/'+version : ''), {
             headers: {'Content-Type':'application/json'}
         })
             .then(response => {
@@ -92,8 +97,7 @@ class WizScoreBody extends React.Component<{
             })
     }
 
-    // The weightings only describe this validator's score when the versions match; while the backend
-    // switches versions /wiz_score can be ahead of the scores, so fall back to the previous layout
+    // Undefined until the weightings for this validator's score version have loaded
     weightings() {
         const w = this.state.weightings;
         return (w && w.score_version === this.props.validator.score_version) ? w : undefined;
@@ -102,19 +106,6 @@ class WizScoreBody extends React.Component<{
     // Weight as Wiz points in percent, e.g. 0.2 -> 20
     points(weight: number) {
         return parseFloat((weight*100).toFixed(2));
-    }
-
-    // Score version 84 rows, detected from the weightings (absent keys mean v83 rendering)
-    hasVoteSuccessScore() {
-        return this.weightings()?.vote_success_weight > 0;
-    }
-
-    hasBlockProductionScore() {
-        return this.weightings()?.skip_rate_source === 'block_production';
-    }
-
-    hasMevScore() {
-        return this.weightings()?.mev_weight > 0;
     }
 
     renderInfoCount() {
@@ -175,7 +166,8 @@ class WizScoreBody extends React.Component<{
     blockProductionTooltip() {
         const w = this.weightings();
         const benchmark = (this.props.validator.fee_capture_benchmark!=null) ? ' ('+this.props.validator.fee_capture_benchmark.toFixed(2)+')' : '';
-        const cutoff = (w.skip_rate_cutoff_floor) ? w.skip_rate_cutoff_floor+"% or "+w.skip_rate_cutoff_multiplier+"× the network skip rate this epoch, whichever is higher" : w.skip_rate_cutoff_multiplier+"× the network skip rate this epoch";
+        let cutoff = "a multiple of the network skip rate this epoch";
+        if(w) cutoff = (w.skip_rate_cutoff_floor) ? w.skip_rate_cutoff_floor+"% or "+w.skip_rate_cutoff_multiplier+"× the network skip rate this epoch, whichever is higher" : w.skip_rate_cutoff_multiplier+"× the network skip rate this epoch";
         return "Producing blocks and packing them well. Score = skip score × fee capture score. Skip score falls linearly from full at 0% skipped to 0 at "+cutoff+". Fee capture score = this validator's fee capture index ÷ the network p90"+benchmark+", capped at 1. A validator that skips all its leader slots scores 0. Until the validator has had 12 leader slots this epoch, its previous epoch's figures are used. Skips are penalised more heavily in the Wiz Score than in the block packing gauge.";
     }
 
@@ -195,27 +187,27 @@ class WizScoreBody extends React.Component<{
         );
     }
 
-    renderVersion84Rows() {
-        const v = this.props.validator;
+    voteSuccessTooltip() {
         const w = this.weightings();
-        let rows = [];
-        if(this.hasVoteSuccessScore()) {
-            rows.push(
+        const base = "Share of the optimal vote rewards the validator earned this epoch: its own votes landing (voting) plus, as leader, including other validators' votes in its blocks (inclusion). Skipped leader slots earn no inclusion rewards and count against it.";
+        if(!w) return base;
+        return base+" Scored linearly from 0 at "+this.points(w.vote_success_cutoff ?? 0)+"% to the full "+this.points(w.vote_success_weight)+"% at 100%.";
+    }
+
+    renderVoteAndBlockRows() {
+        const v = this.props.validator;
+        return [
                 <WizScoreRow
                     key='vote-success'
                     label='Vote success'
-                    tooltip={"Share of the optimal vote rewards the validator earned this epoch: its own votes landing (voting) plus, as leader, including other validators' votes in its blocks (inclusion). Skipped leader slots earn no inclusion rewards and count against it. Scored linearly from 0 at "+this.points(w.vote_success_cutoff ?? 0)+"% to the full "+this.points(w.vote_success_weight)+"% at 100%."}
+                    tooltip={this.voteSuccessTooltip()}
                     value={v.vote_success.toFixed(2)+'%'}
                     score={v.vote_success_score}
                     addPercent={true}
                     threshold='0'
                     color='green'
                     sign='+'
-                />
-            );
-        }
-        if(this.hasBlockProductionScore()) {
-            rows.push(
+                />,
                 <WizScoreRow
                     key='block-production'
                     label='Block production'
@@ -237,11 +229,7 @@ class WizScoreBody extends React.Component<{
                     threshold='0'
                     color='green'
                     sign=''
-                />
-            );
-        }
-        if(this.hasMevScore()) {
-            rows.push(
+                />,
                 <WizScoreRow
                     key='mev'
                     label='MEV'
@@ -253,9 +241,7 @@ class WizScoreBody extends React.Component<{
                     color='green'
                     sign={(v.mev_ignored) ? '' : '+'}
                 />
-            );
-        }
-        return rows;
+        ];
     }
 
     renderWithdrawAuthorityValue() {
@@ -265,14 +251,6 @@ class WizScoreBody extends React.Component<{
         else {
             return 'Set to validator identity (security risk)';
         }
-    }
-
-    renderSuccessValue(value: number | null) {
-        return (value==null) ? 'N/A' : Number(value).toFixed(2)+'%';
-    }
-
-    renderSuccessScore(score: number | null) {
-        return (score==null) ? 'N/A' : score;
     }
 
     renderSuperminorityValue() {
@@ -373,55 +351,7 @@ class WizScoreBody extends React.Component<{
                                 </tr>
                             </thead>
                             <tbody>
-                                {(this.hasVoteSuccessScore()) ? null : <>
-                                <WizScoreRow
-                                    key='voting-success'
-                                    label='Voting success'
-                                    tooltip="Share of the optimal voting rewards the validator earned this epoch: how reliably its votes landed in the vote aggregates. Capped at 100%."
-                                    value={this.renderSuccessValue(this.props.validator.voting_success)}
-                                    score={this.renderSuccessScore(this.props.validator.voting_success_score)}
-                                    addPercent={this.props.validator.voting_success_score!=null}
-                                    threshold='0'
-                                    color='green'
-                                    sign={(this.props.validator.voting_success_score!=null) ? '+' : undefined}
-                                /> 
-                                <WizScoreRow
-                                    key='inclusion-success'
-                                    label='Inclusion success'
-                                    tooltip="Share of the optimal leader vote rewards the validator earned this epoch by including other validators' votes in its blocks. Skipped leader slots count against it. Shown once the validator has had 12 leader slots this epoch; until then its score uses voting success."
-                                    value={this.renderSuccessValue(this.props.validator.inclusion_success)}
-                                    score={this.renderSuccessScore(this.props.validator.inclusion_success_score)}
-                                    addPercent={this.props.validator.inclusion_success_score!=null}
-                                    threshold='0'
-                                    color='green'
-                                    sign={(this.props.validator.inclusion_success_score!=null) ? '+' : undefined}
-                                />
-                                </>}
-                                {this.renderVersion84Rows()}
-                                {(this.hasBlockProductionScore()) ? null : <>
-                                <WizScoreRow
-                                    key='skip-rate'
-                                    label='Slot skip rate'
-                                    tooltip="Percentage of leader slots in which this validator failed to produce a block. Score is ignored for low-staked validators."
-                                    value={new Intl.NumberFormat().format(Number(this.props.validator.skip_rate.toFixed(1)))+'%'}
-                                    score={this.props.validator.skip_rate_score}
-                                    addPercent={true}
-                                    threshold='0'
-                                    color='green'
-                                    sign='+'
-                                /> 
-                                <WizScoreRow
-                                    key='skip-rate-ignored'
-                                    label='Skip rate ignored'
-                                    tooltip="Skip rate is ignored if validator's stake is below a threshold (see FAQ)."
-                                    value={(this.props.validator.skip_rate_ignored) ? 'Yes' : 'No'}
-                                    score={(this.props.validator.skip_rate_ignored) ? 'scaled up' : 'N/A'}
-                                    addPercent={false}
-                                    threshold='0'
-                                    color='green'
-                                    sign=''
-                                />
-                                </>}
+                                {this.renderVoteAndBlockRows()}
                                 <WizScoreRow
                                     label='Published information'
                                     tooltip={this.infoTooltip()}
@@ -649,7 +579,6 @@ class WizScoreWeightings extends React.Component<{},
 
     render() {
         if(this.state.hasData) {
-            const skipRateSource = this.state.weightings.skip_rate_source;
             return (
                 [
                     <p key='wiz-weighting-paragraph'>
@@ -674,13 +603,13 @@ class WizScoreWeightings extends React.Component<{},
                             {this.renderOptionalRow('vote_success_cutoff', 'Vote success cutoff', 'Vote success at or below this scores 0; full score at 100%.')}
                             <tr>
                                 <td>
-                                    {(skipRateSource==='block_production') ? 'Block production weight' : 'Skip rate weight'}
+                                    Block production weight
                                 </td>
                                 <td>
                                     {this.state.weightings.skip_rate_weight}
                                 </td>
                                 <td>
-                                    {(skipRateSource==='block_production') ? 'The weighting given to block production (skip score × fee capture score).' : <>The weighting given to validator&apos;s skip rate.</>}
+                                    The weighting given to block production (skip score × fee capture score).
                                 </td>
                             </tr>
                             <tr>
@@ -691,15 +620,10 @@ class WizScoreWeightings extends React.Component<{},
                                     {this.state.weightings.skip_rate_cutoff_multiplier}
                                 </td>
                                 <td>
-                                    {(skipRateSource && skipRateSource!=='rpc') ? (
-                                        <>The network skip rate this epoch (total skipped ÷ total leader slots) × this multiplier is the skip rate that scores 0{(this.state.weightings.skip_rate_cutoff_floor) ? <>, or the cutoff floor if that is higher</> : null}.</>
-                                    ) : (
-                                        <>Cluster average * this multiplier gives us the value which has a 0 score. If the average skip rate is 5% and the multiplier is 2, then a 10% skip rate or above will have a score of 0, and anything below 10% will have a score higher than 0.</>
-                                    )}
+                                    The network skip rate this epoch (total skipped ÷ total leader slots) × this multiplier is the skip rate that scores 0{(this.state.weightings.skip_rate_cutoff_floor) ? <>, or the cutoff floor if that is higher</> : null}.
                                 </td>
                             </tr>
                             {this.renderOptionalRow('skip_rate_cutoff_floor', 'Skip rate cutoff floor', 'The skip rate (%) that scores 0 is never lower than this.')}
-                            {this.renderOptionalRow('skip_rate_source', 'Skip rate source', 'rpc (default): RPC skip rate vs the mean. blocks: block-index skip rate vs the network rate. block_production: block skip score × fee capture score.')}
                             {this.renderOptionalRow('skip_rate_min_slots', 'Skip rate min slots', 'Leader slots needed this epoch before the skip rate is scored.')}
                             {this.renderOptionalRow('mev_weight', 'MEV weight', 'Net Jito tips per block vs the p90 of Jito validators. Non-Jito validators are excluded and their score rescaled.')}
                             {this.renderOptionalRow('mev_min_blocks', 'MEV min blocks', 'Blocks with tips needed this epoch before MEV is scored.')}
@@ -712,7 +636,7 @@ class WizScoreWeightings extends React.Component<{},
                                     ◎ {this.state.weightings.skip_rate_min_stake}
                                 </td>
                                 <td>
-                                    For validators with less than this amount of activated stake we ignore the skip rate. The remaining score is scaled up by the skip rate weight to achieve a score out of 100%. This is because skip rate is highly variable and for validators with low stake and few leader slots it can lead to extremely high variance that it not necessarily reflective of the quality of the node&apos;s operation.
+                                    Validators with less activated stake than this are excluded from block production scoring and the rest of their score is scaled up. Block production is otherwise scored from 12 leader slots, using the previous epoch&apos;s figures until a validator has had 12 this epoch.
                                 </td>
                             </tr>
                             <tr>
