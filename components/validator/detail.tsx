@@ -566,7 +566,7 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                             <div className='validator-detail-flex-opacity-bg'></div>
                             <div className='card text-light'>
                                 <div className='card-header'>
-                                    24h Moving Average Wiz Score
+                                    24h moving average Wiz Score
                                 </div>
                                 <div className='card-body'>
                                     <WizScoreChart 
@@ -579,7 +579,7 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                             <div className='validator-detail-flex-opacity-bg'></div>
                             <div className='card text-light'>
                                 <div className='card-header'>
-                                    Active Stake (30 epochs)
+                                    Active stake (30 epochs)
                                 </div>
                                 <div className='card-body'>
                                     <StakeHistoryChart
@@ -609,7 +609,7 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                             <div className='validator-detail-flex-opacity-bg'></div>
                             <div className='card text-light'>
                                 <div className='card-header'>
-                                    Vote Success
+                                    Vote success
                                     <OverlayTrigger
                                         placement="bottom"
                                         overlay={
@@ -632,7 +632,7 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                             <div className='validator-detail-flex-opacity-bg'></div>
                             <div className='card text-light'>
                                 <div className='card-header'>
-                                    Block Packing
+                                    Block packing
                                     <OverlayTrigger
                                         placement="bottom"
                                         overlay={
@@ -668,7 +668,7 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                             <div className='validator-detail-flex-opacity-bg'></div>
                             <div className='card text-light'>
                                 <div className='card-header'>
-                                    Commission History
+                                    Commission history
                                 </div>
                                 <div className='card-body'>
                                     {this.renderCommissionTable()}
@@ -676,7 +676,7 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                             </div>
                             <div className='card text-light'>
                                 <div className='card-header'>
-                                    Jito MEV Commission History
+                                    Jito MEV commission history
                                 </div>
                                 <div className='card-body'>
                                     {this.renderJitoCommissionTable()}
