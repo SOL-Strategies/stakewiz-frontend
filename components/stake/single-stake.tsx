@@ -6,7 +6,7 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import config from '../../config.json';
 import { getStakeAccounts, StakeInput } from './common'
 import { getEpochInfo, Spinner } from '../common';
-import { RenderImage, RenderName } from '../validator/common';
+import { RenderImage, RenderName, blockProductionColor, networkSpreadColor, BLOCK_PRODUCTION_INSUFFICIENT } from '../validator/common';
 import { buildVersionedTx, createStake } from './transactions'
 import * as gtag from '../../lib/gtag.js'
 
@@ -240,12 +240,20 @@ export const StakeDialog: FC<{
                                 Wiz Score
                             </div>
                         </div>
-                        <div className='col'>
-                            <div className={(validator.skip_rate<clusterStats.avg_skip_rate*2) ? 'text-success' : 'text-danger'}>
-                                {validator.skip_rate.toFixed(1)} %
+                        <div className='col' title={(validator.block_production==null) ? BLOCK_PRODUCTION_INSUFFICIENT : undefined}>
+                            <div style={{color: blockProductionColor(validator.block_production, validator.block_production_p10, validator.block_production_median)}}>
+                                {(validator.block_production==null) ? '—' : parseFloat(validator.block_production.toFixed(1))+' %'}
                             </div>
                             <div>
-                                Skip rate
+                                Block packing
+                            </div>
+                        </div>
+                        <div className='col'>
+                            <div style={{color: networkSpreadColor(validator.vote_success, clusterStats?.vote_success?.p10, clusterStats?.vote_success?.median) ?? undefined}}>
+                                {parseFloat(validator.vote_success.toFixed(1))} %
+                            </div>
+                            <div>
+                                Vote Success
                             </div>
                         </div>
                         <div className='col'>
