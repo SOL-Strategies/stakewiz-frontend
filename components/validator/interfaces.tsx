@@ -11,6 +11,11 @@ export interface validatorI {
     version: string;
     delinquent: boolean;
     skip_rate: number;
+    wiz_skip_rate: number;
+    block_production: number | null;
+    block_production_p10: number | null;
+    block_production_median: number | null;
+    block_production_p90: number | null;
     created_at: string;
     updated_at: string;
     oldest_active_stake_pubkey: string;
@@ -25,7 +30,7 @@ export interface validatorI {
     gossip_ip: string;
     mod: boolean;
     is_jito: boolean;
-    jito_commission_bps;
+    jito_commission_bps: number;
     admin_comment: string|null;
     ip_latitude: string;
     ip_longitude: string;
@@ -38,9 +43,23 @@ export interface validatorI {
     ignore: boolean;
     vote_success: number;
     vote_success_score: number;
+    voting_success: number | null;
+    voting_success_score: number;
+    inclusion_success: number | null;
+    inclusion_success_score: number;
     skip_rate_score: number;
     info_score: number;
     commission_score: number;
+    // Wiz score components added for score version 84 (score fields are Wiz points in percent; tips in SOL)
+    mev_tips_per_block?: number | null;
+    mev_benchmark?: number | null;
+    mev_score?: number;
+    mev_ignored?: boolean;
+    wiz_fee_capture_index?: number | null;
+    fee_capture_benchmark?: number | null;
+    fee_capture_score?: number;
+    fee_capture_ignored?: boolean;
+    wizscore_commission: number;
     first_epoch_distance: number;
     epoch_distance_score: number;
     stake_weight: number;
@@ -68,8 +87,10 @@ export interface validatorI {
     asncity_concentration: number;
     asncity_concentration_score: number;
     stake_ratio: number;
-    credit_ratio: number;
-    apy_estimate: number;
+    /** @deprecated always null; use vote_success */
+    credit_ratio: null;
+    /** @deprecated always null; use staking_apy */
+    apy_estimate: null;
     rank: number;
     updateTitle: Function;
     userPubkey: string;
@@ -81,6 +102,41 @@ export interface validatorI {
     bls_pubkey: string;
 };
 
+// /wiz_score weightings for the active score version; absent keys mean 0 or the default
+export interface WizWeightingsI {
+    score_version: number;
+    vote_success_weight?: number;
+    vote_success_cutoff?: number;
+    voting_success_weight?: number;
+    inclusion_success_weight?: number;
+    skip_rate_weight: number;
+    skip_rate_min_stake: number;
+    skip_rate_cutoff_multiplier: number;
+    // 'rpc' (default), 'blocks' or 'block_production'
+    skip_rate_source?: string;
+    skip_rate_min_slots?: number;
+    mev_weight?: number;
+    mev_min_blocks?: number;
+    mev_min_validators?: number;
+    commission_weight: number;
+    max_commission: number;
+    info_weight: number;
+    epoch_distance_max: number;
+    epoch_distance_weight: number;
+    stake_weight_threshold: number;
+    stake_weight_weight: number;
+    uptime_weight: number;
+    uptime_cutoff: number;
+    min_versions: string[];
+    invalid_version_penalty: number;
+    withdraw_authority_penalty: number;
+    asn_concentration_weight: number;
+    city_concentration_weight: number;
+    asn_city_concentration_weight: number;
+    tpu_ip_concentration_weight: number;
+    superminority_penalty: number;
+}
+
 export interface clusterStatsI {
     avg_credit_ratio: number;
     avg_activated_stake: number;
@@ -88,6 +144,10 @@ export interface clusterStatsI {
     avg_commission: number;
     avg_skip_rate: number;
     avg_apy: number;
+    // Percent spread across validators with a value this epoch (absent until the API deploys it)
+    vote_success?: PercentilesI | null;
+    voting_success?: PercentilesI | null;
+    inclusion_success?: PercentilesI | null;
 };
 
 export interface ValidatorBoxPropsI {
@@ -169,4 +229,55 @@ export interface EpochInfoI {
     start_time: string;
     remaining_seconds: number;
     elapsed_seconds: number;
+}
+// Block stats ratios are fractions (0-1) and amounts are lamports
+export interface BlockStatsI {
+    epoch: number;
+    leader_slots: number;
+    blocks_produced: number;
+    skipped_slots: number;
+    skip_rate: number;
+    fee_total: number;
+    fee_base_total: number;
+    fee_priority_total: number;
+    leader_reward_lamports: number;
+    fee_per_block: number;
+    fee_per_cu: number;
+    priority_fee_per_cu: number;
+    tips_lamports: number;
+    tip_blocks: number;
+    tips_per_block: number;
+    cu_total: number;
+    cu_per_block: number;
+    cost_units_per_block: number;
+    fullness: number;
+    full_blocks: number;
+    full_block_share: number;
+    tx_count: number;
+    txs_per_block: number;
+    failed_tx_share: number;
+    final: boolean;
+}
+
+export interface ValidatorBlockStatsI extends BlockStatsI {
+    identity: string;
+    block_production: number | null;
+    fullness_p90: number;
+    cost_units_p90: number;
+    fee_capture_index: number | null;
+    value_capture_index: number | null;
+}
+
+export interface PercentilesI {
+    p10: number;
+    median: number;
+    p90: number;
+}
+
+export interface ClusterBlockStatsI extends BlockStatsI {
+    validators: number;
+    validator_fee_per_cu: PercentilesI | null;
+    validator_fee_capture_index: PercentilesI | null;
+    validator_skip_rate: PercentilesI | null;
+    validator_block_production: PercentilesI | null;
 }

@@ -3,20 +3,42 @@ import { FC } from "react";
 const GaugeComponent = dynamic(() => import('react-gauge-component'), { ssr: false });
 const GaugeChart = dynamic(() => import('react-gauge-chart'), { ssr: false });
 import WizEmblem from '../../public/images/emblem.svg'
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { BLOCK_PRODUCTION_MAX, BLOCK_PRODUCTION_INSUFFICIENT, blockProductionColor as getBlockProductionColor, networkSpreadColor as getNetworkSpreadColor } from './common';
+
+const GAUGE_FONT_SIZE = 30;
+
+// Percentage with up to `decimals` places, dropping trailing zeros (112.0 -> 112)
+const formatPercent = (n: number, decimals: number) => parseFloat(n.toFixed(decimals)).toString()+' %';
+
+// react-gauge-component scales the value text by 6/length once it is over 4 characters;
+// undo that so every gauge's value renders at the same size
+const valueLabel = (text: string) => ({
+    formatTextValue: () => text,
+    style: { fontSize: (GAUGE_FONT_SIZE / ((text.length > 4) ? 6/text.length : 1))+'px' }
+});
 
 export const Gauges: FC<{
-    skip_rate: number, 
+    block_production: number | null,
+    block_production_p10: number | null,
+    block_production_median: number | null,
+    vote_success: number,
+    vote_success_p10?: number | null,
+    vote_success_median?: number | null,
     wiz_score: number, 
     uptime: number }> = ({
-        skip_rate, wiz_score, uptime
+        block_production, block_production_p10, block_production_median, vote_success, vote_success_p10, vote_success_median, wiz_score, uptime
     }) => {
 
+    const blockProductionMax = BLOCK_PRODUCTION_MAX;
+    const blockProductionInsufficient = BLOCK_PRODUCTION_INSUFFICIENT;
+    const blockProductionColor = getBlockProductionColor(block_production, block_production_p10, block_production_median);
+    const voteSuccessColor = getNetworkSpreadColor(vote_success, vote_success_p10, vote_success_median) ?? '#55bb55';
 
-    let skipGauge = [
+    let voteSuccessGauge = [
         ["Label", "Value"],
-        ["Skip Rate", {v: skip_rate, f: skip_rate.toFixed(1)+'%'}]
-        
-    ];
+        ["Vote Success", {v: vote_success, f: vote_success.toFixed(1)+'%'}]
+    ]
     let wizScoreGauge = [
         ["Label", "Value"],
         ["Wiz Score", {v: wiz_score, f: wiz_score.toFixed(1)+'%'}]
@@ -30,39 +52,99 @@ export const Gauges: FC<{
         width: 180
     }
 
-    console.log(skip_rate);
-
     return (
         <div className='d-flex flex-nowrap justify-content-center mobile-gauge-container text-white my-2'>
                 <div className='d-flex flex-row'>
                     <div className='flex-shrink-1 d-flex flex-column align-items-center'>
+                        <OverlayTrigger
+                            placement="bottom"
+                            trigger={(block_production==null) ? ['hover', 'focus'] : []}
+                            overlay={
+                                <Tooltip>
+                                    {blockProductionInsufficient}
+                                </Tooltip>
+                            }
+                        >
                         <div>
-                            <GaugeComponent id='gauge-chart-skip' 
+                            <GaugeComponent id='gauge-chart-block-production'
                                 type="semicircle"
                                 arc={{
                                     cornerRadius: 0,
                                     width:0.15,
                                     subArcs: [
                                         {
-                                            limit: (skip_rate >=5) ? 4.99 : skip_rate,
-                                            color: '#bb5555',
+                                            limit: (block_production==null) ? 0.01 : Math.max(0.01, Math.min(block_production, blockProductionMax-0.01)),
+                                            color: blockProductionColor,
                                             
                                         },
                                         {
-                                            limit: 5,
-                                            color:'#55bb55',
+                                            limit: blockProductionMax,
+                                            color:'#555555',
                                         }
                                     ]
                                 }}
-                                maxValue={5}
-                                value={skip_rate} 
+                                maxValue={blockProductionMax}
+                                value={(block_production==null) ? 0 : Math.min(block_production, blockProductionMax)} 
                                 pointer={{hide:true}}
                                 style={chartStyle}
-                                labels={{tickLabels:{hideMinMax:true}, valueLabel: {formatTextValue: (value) => value+' %', style: { fontSize: '30px'}}}}
+                                labels={{tickLabels:{hideMinMax:true}, valueLabel: valueLabel((block_production==null) ? '—' : formatPercent(block_production, 1))}}
+                            />
+                        </div>
+                        </OverlayTrigger>
+                        <div>
+                            Block packing
+                            <OverlayTrigger
+                                placement="bottom"
+                                overlay={
+                                    <Tooltip>
+                                        Fee capture index minus skip rate. A market-typical block in every slot would be a 100% value.
+                                        {(block_production_median!=null) ? <><br />Network median {block_production_median.toFixed(1)}%, p10 {block_production_p10?.toFixed(1)}%.</> : null}
+                                        {(block_production==null) ? <><br />{blockProductionInsufficient}</> : null}
+                                    </Tooltip>
+                                }
+                            >
+                                <i className='bi bi-info-circle ms-1'></i>
+                            </OverlayTrigger>
+                        </div>
+                    </div>
+                    <div className='flex-grow-1 d-flex flex-column align-items-center'>
+                        <div>
+                            <GaugeComponent id='gauge-chart-vote-success' 
+                                type="semicircle"
+                                arc={{
+                                    cornerRadius: 0,
+                                    width:0.15,
+                                    subArcs: [
+                                        {
+                                            limit: Math.max(0.01, Math.min(vote_success, 99.99)),
+                                            color: voteSuccessColor,
+                                            
+                                        },
+                                        {
+                                            limit: 100,
+                                            color:'#555555',
+                                        }
+                                    ]
+                                }}
+                                value={vote_success} 
+                                pointer={{hide:true}}
+                                style={chartStyle}
+                                labels={{tickLabels:{hideMinMax:true}, valueLabel: valueLabel(formatPercent(vote_success, 1))}}
                             />
                         </div>
                         <div>
-                            Skip rate
+                            Vote success
+                            <OverlayTrigger
+                                placement="bottom"
+                                overlay={
+                                    <Tooltip>
+                                        Share of the optimal vote rewards earned this epoch.
+                                        {(vote_success_median!=null) ? <><br />Network median {vote_success_median.toFixed(1)}%, p10 {vote_success_p10?.toFixed(1)}%.</> : null}
+                                    </Tooltip>
+                                }
+                            >
+                                <i className='bi bi-info-circle ms-1'></i>
+                            </OverlayTrigger>
                         </div>
                     </div>
                 </div>
@@ -89,7 +171,7 @@ export const Gauges: FC<{
                                 value={wiz_score} 
                                 pointer={{hide:true}}
                                 style={chartStyle}
-                                labels={{tickLabels:{hideMinMax:true}, valueLabel: {formatTextValue: (value) => value+' %', style: { fontSize: '30px'}, maxDecimalDigits: 1}}}
+                                labels={{tickLabels:{hideMinMax:true}, valueLabel: valueLabel(formatPercent(wiz_score, 1))}}
                             />
                         </div>
                         <div>
@@ -118,7 +200,7 @@ export const Gauges: FC<{
                                 value={uptime} 
                                 pointer={{hide:true}}
                                 style={chartStyle}
-                                labels={{tickLabels:{hideMinMax:true}, valueLabel: {formatTextValue: (value) => value+' %', style: { fontSize: '30px'}}}}
+                                labels={{tickLabels:{hideMinMax:true}, valueLabel: valueLabel(formatPercent(uptime, 2))}}
                             />
                         </div>
                         <div>
