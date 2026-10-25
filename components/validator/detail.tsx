@@ -3,7 +3,7 @@ import axios from 'axios';
 import config from '../../config.json';
 import { validatorI, ValidatorBoxPropsI, ValidatorListI, ValidatorListingI, validatorDetailI, clusterStatsI } from './interfaces'
 import {checkSolflareEnabled, ConditionalWrapper, getClusterStats, Spinner} from '../common'
-import { RenderImage, RenderName, RenderUrl, StakeLabel } from './common';
+import { RenderImage, RenderName, RenderUrl, StakeLabel, clientVersion } from './common';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { Gauges } from './gauges';
 import { StakeHistoryChart } from './stake_history';
@@ -534,7 +534,7 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                                         </div>
                                         <div className='col'>
                                             <div className='col d-flex align-items-center'>
-                                                {this.state.validator.version}
+                                                {clientVersion(this.state.validator)}
                                             </div>
                                         </div>
                                     </div>

@@ -12,6 +12,8 @@ export interface validatorI {
     delinquent: boolean;
     skip_rate: number;
     wiz_skip_rate: number;
+    // Validator client as reported by the node, e.g. 'AgaveBam'; 'Not reported' or 'Unknown' when absent
+    client?: string | null;
     block_production: number | null;
     block_production_p10: number | null;
     block_production_median: number | null;
@@ -151,7 +153,17 @@ export interface clusterStatsI {
     inclusion_success?: PercentilesI | null;
     // Current epoch to date (fractions); null briefly at the start of an epoch
     block_stats?: ClusterBlockStatsI | null;
+    // Network split by validator client; activated_stake in lamports, percentages in percent
+    clients?: ClientShareI[];
 };
+
+export interface ClientShareI {
+    client: string;
+    validators: number;
+    validators_pct: number;
+    activated_stake: number;
+    stake_pct: number;
+}
 
 export interface ValidatorBoxPropsI {
     validator: validatorI;

@@ -44,6 +44,7 @@
     "TX_RESERVE_LAMPORTS": 10000000,
     "EXPLORER_TX_BASE": "https://solscan.io/tx/",
     "EXPLORER_ACCOUNT_BASE": "https://solscan.io/account/",
+    "EXPLORER_BLOCK_BASE": "https://solscan.io/block/",
     "DEFAULT_STAKE_RENT_LAMPORTS": 2282880,
     "SLOTS_PER_EPOCH": 432000,
     "PUBLIC_RPC_HTTP": "https://solana-rpc.publicnode.com",

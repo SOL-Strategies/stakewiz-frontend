@@ -46,7 +46,7 @@ export default function Network() {
                         <BlockRevenueHistory />
                         <EpochDurationHistory />
                         <BlockTotals clusterStats={clusterStats} />
-                        {(validators) ? <NetworkComposition validators={validators} /> : null}
+                        {(validators) ? <NetworkComposition validators={validators} clusterStats={clusterStats} /> : null}
                     </div>
                 </div>
             </main>

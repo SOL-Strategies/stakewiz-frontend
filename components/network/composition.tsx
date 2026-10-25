@@ -1,6 +1,6 @@
 import { FC } from "react";
 import Chart from "react-google-charts";
-import { validatorI } from '../validator/interfaces';
+import { clusterStatsI, validatorI } from '../validator/interfaces';
 import { NetworkCard, COLORS, chartOptions, formatNumber } from './common';
 import { nakamotoCoefficient, STAKE_THRESHOLDS } from './current_epoch';
 
@@ -97,15 +97,33 @@ const StakeCurve: FC<{validators: validatorI[], totalStake: number}> = ({validat
     );
 }
 
-export const NetworkComposition: FC<{validators: validatorI[]}> = ({validators}) => {
+// Top entries of the network client split, with the remainder as 'Other'
+const clientShares = (clusterStats: clusterStatsI, key: 'stake_pct' | 'validators_pct', top = 7): [string, number][] => {
+    const sorted = [...(clusterStats?.clients || [])].sort((a, b) => b[key] - a[key]);
+    let rows: [string, number][] = sorted.slice(0, top).map((c) => [c.client, c[key]/100]);
+    const other = sorted.slice(top).reduce((sum, c) => sum + c[key], 0);
+    if(other > 0) rows.push(['Other', other/100]);
+    return rows;
+}
+
+export const NetworkComposition: FC<{validators: validatorI[], clusterStats: clusterStatsI}> = ({validators, clusterStats}) => {
     const staked = validators.filter((v) => v.activated_stake > 0);
     const totalStake = staked.reduce((sum, v) => sum + v.activated_stake, 0);
     const delinquent = staked.filter((v) => v.delinquent);
+    const hasClients = (clusterStats?.clients?.length ?? 0) > 0;
 
     return (
         <>
             <StakeCurve validators={staked} totalStake={totalStake} />
-            <NetworkCard title='Client versions by stake' tooltip={formatNumber(staked.length)+' validators with stake, ◎ '+formatNumber(totalStake/1e6, 1)+'M active, '+delinquent.length+' delinquent.'}>
+            <NetworkCard title='Stake by client' tooltip='Share of active stake by the validator client each node reports.'>
+                <Donut rows={(hasClients) ? clientShares(clusterStats, 'stake_pct') : stakeShares(staked, (v) => v.client, totalStake, 7)} label='Client' />
+            </NetworkCard>
+            {(hasClients) ? (
+                <NetworkCard title='Validators by client' tooltip='Share of validators by reported client, regardless of stake. Many small validators do not report a client.'>
+                    <ShareBars rows={clientShares(clusterStats, 'validators_pct')} label='Client' color={COLORS.cyan} />
+                </NetworkCard>
+            ) : null}
+            <NetworkCard title='Stake by version' tooltip={formatNumber(staked.length)+' validators with stake, ◎ '+formatNumber(totalStake/1e6, 1)+'M active, '+delinquent.length+' delinquent.'}>
                 <Donut rows={stakeShares(staked, (v) => v.version, totalStake, 6)} label='Version' />
             </NetworkCard>
             <NetworkCard title='Stake by country'>

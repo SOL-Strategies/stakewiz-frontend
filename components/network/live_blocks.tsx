@@ -4,6 +4,7 @@ import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import config from '../../config.json'
 import { validatorI } from '../validator/interfaces';
 import { NetworkCard, COLORS, formatNumber } from './common';
+import { clientVersion } from '../validator/common';
 
 const MAX_SLOTS = 64;
 const RENDER_INTERVAL_MS = 400;
@@ -16,6 +17,15 @@ const RANK_WINDOW = 1400;
 const RANK_MIN_BLOCKS = 30;
 
 type BlockRank = 'top' | 'mid' | 'low' | 'warming';
+
+const RANK_LABELS: {[rank in BlockRank]: string} = {
+    top: 'Top half',
+    mid: 'Below median',
+    low: 'Bottom 10%',
+    warming: 'Not ranked yet'
+};
+
+const CARD_WIDTH = 320;
 
 const RANK_COLORS: {[rank in BlockRank]: string} = {
     top: COLORS.green,
@@ -30,6 +40,7 @@ interface LiveSlotI {
     // Passed while the stream was paused or reconnecting, so not watched
     missed?: boolean;
     time?: number;
+    blockHeight?: number;
     leader?: string;
     feeReward?: number;
     // Fee reward relative to the median recent block, and where it falls among recent blocks
@@ -77,6 +88,9 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
     const scheduleLoading = useRef(false);
     // Fee rewards of recent blocks, oldest first, for ranking each new block
     const recentRewards = useRef<number[]>([]);
+    // While a block is hovered the strip holds still; new blocks keep buffering and appear on mouse out
+    const hoverPaused = useRef(false);
+    const [selected, setSelected] = useState<{slot: LiveSlotI, leader: string, window: LiveSlotI[], left: number}>(null);
 
     const byIdentity = useRef<{[identity: string]: validatorI}>({});
     useEffect(() => {
@@ -141,7 +155,7 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
             }
             const reward = (block.rewards || []).find((r) => r.rewardType === 'Fee');
             const ranked = (reward) ? rankBlock(reward.lamports) : {rank: 'warming' as BlockRank};
-            pending.current.push({slot, skipped: false, time: block.blockTime, leader: reward?.pubkey ?? leaderOf(slot), feeReward: reward?.lamports, ...ranked});
+            pending.current.push({slot, skipped: false, time: block.blockTime, blockHeight: block.blockHeight, leader: reward?.pubkey ?? leaderOf(slot), feeReward: reward?.lamports, ...ranked});
             lastSlot.current = slot;
         }
 
@@ -189,7 +203,7 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
         }
 
         const render = setInterval(() => {
-            if(pending.current.length === 0) return;
+            if(pending.current.length === 0 || hoverPaused.current) return;
             const batch = pending.current;
             pending.current = [];
             setSlots((current) => [...[...batch].reverse(), ...current].slice(0, MAX_SLOTS));
@@ -260,41 +274,71 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
         return (identity) ? identity.slice(0, 4)+'…'+identity.slice(-4) : 'Unknown leader';
     }
 
-    const missedTooltip = (identity: string, groupSlots: LiveSlotI[]) => (
-        <Tooltip>
-            {(identity) ? <div className='fw-bold'>{nameFor(identity)}</div> : null}
-            <div>{groupSlots.length} slots not watched: they passed while this tab was in the background or the stream was reconnecting.</div>
-        </Tooltip>
-    );
-
-    const leaderTooltip = (identity: string, groupSlots: LiveSlotI[]) => {
-        const v = validatorFor(identity);
-        const produced = groupSlots.filter((s) => !s.skipped && !s.missed);
-        const skipped = groupSlots.filter((s) => s.skipped).length;
-        const notWatched = groupSlots.filter((s) => s.missed).length;
-        const fees = produced.reduce((sum, s) => sum + (s.feeReward || 0), 0);
-        const ratios = produced.filter((s) => s.ratio!=null).map((s) => s.ratio);
-        const averageRatio = (ratios.length > 0) ? ratios.reduce((sum, r) => sum + r, 0)/ratios.length : null;
-        return (
-            <Tooltip>
-                <div className='fw-bold'>{nameFor(identity)}</div>
-                {(v) ? (
-                    <>
-                        <div>Wiz Score {v.wiz_score.toFixed(1)}% (#{v.rank})</div>
-                        <div>Block production {(v.block_production!=null) ? v.block_production.toFixed(1)+'%' : '—'}</div>
-                        <div>Vote success {v.vote_success.toFixed(1)}%</div>
-                    </>
-                ) : <div>Not in the Stakewiz validator list</div>}
-                <div>{produced.length} blocks, {skipped} skipped{(notWatched > 0) ? ', '+notWatched+' not watched' : ''} · ◎ {(fees/1e9).toFixed(4)} fees</div>
-                {(averageRatio!=null) ? <div>These blocks: {averageRatio.toFixed(2)}× the median recent block</div> : null}
-            </Tooltip>
-        );
-    }
-
     const renderLeaderName = (identity: string) => {
         const v = validatorFor(identity);
         if(v) return <Link href={'/validator/'+v.vote_identity}>{nameFor(identity)}</Link>;
         return nameFor(identity);
+    }
+
+    const selectBlock = (e: React.MouseEvent<HTMLDivElement>, slot: LiveSlotI, leader: string, window: LiveSlotI[]) => {
+        hoverPaused.current = true;
+        const wrap = (e.currentTarget.closest('.network-live-wrap') as HTMLElement).getBoundingClientRect();
+        const block = e.currentTarget.getBoundingClientRect();
+        const centre = block.left - wrap.left + block.width/2;
+        setSelected({slot, leader, window, left: Math.max(0, Math.min(wrap.width - Math.min(CARD_WIDTH, wrap.width), centre - CARD_WIDTH/2))});
+    }
+
+    const clearSelection = () => {
+        hoverPaused.current = false;
+        setSelected(null);
+    }
+
+    const renderBlockCard = () => {
+        if(!selected) return null;
+        const s = selected.slot;
+        const v = validatorFor(selected.leader);
+        const produced = selected.window.filter((w) => !w.skipped && !w.missed);
+        const windowFees = produced.reduce((sum, w) => sum + (w.feeReward || 0), 0);
+        const rank: BlockRank = s.rank ?? 'warming';
+        const status = (s.missed) ? {label: 'Not watched', color: UNKNOWN_COLOR} : (s.skipped) ? {label: 'Skipped', color: COLORS.red} : {label: RANK_LABELS[rank], color: RANK_COLORS[rank]};
+        return (
+            <div className='network-block-card small' style={{left: selected.left, width: CARD_WIDTH}}>
+                <div className='d-flex justify-content-between align-items-start mb-1'>
+                    <div className='fw-bold text-truncate me-2'>{(selected.leader) ? renderLeaderName(selected.leader) : 'Unknown leader'}</div>
+                    <span className='badge' style={{background: status.color, color: '#111'}}>{status.label}</span>
+                </div>
+                <div className='network-block-card-grid'>
+                    <span className='text-secondary'>Slot</span><span>{formatNumber(s.slot)}</span>
+                    {(s.blockHeight!=null) ? <><span className='text-secondary'>Block height</span><span>{formatNumber(s.blockHeight)}</span></> : null}
+                    {(s.time) ? <><span className='text-secondary'>Time</span><span>{new Date(s.time*1000).toLocaleTimeString()}</span></> : null}
+                    {(s.feeReward!=null) ? (
+                        <>
+                            <span className='text-secondary'>Fee reward</span>
+                            <span>◎ {(s.feeReward/1e9).toFixed(6)}{(s.ratio!=null) ? <span className='text-secondary'> · {s.ratio.toFixed(2)}× median</span> : null}</span>
+                        </>
+                    ) : null}
+                    {(s.missed) ? <><span className='text-secondary'>Status</span><span>Passed while the stream was paused</span></> : null}
+                    {(s.skipped) ? <><span className='text-secondary'>Status</span><span>No block produced in this slot</span></> : null}
+                </div>
+                <hr className='my-2' />
+                {(v) ? (
+                    <div className='network-block-card-grid'>
+                        <span className='text-secondary'>Client</span><span>{clientVersion(v)}</span>
+                        <span className='text-secondary'>Wiz Score</span><span>{v.wiz_score.toFixed(1)}% (#{v.rank})</span>
+                        <span className='text-secondary'>Block production</span><span>{(v.block_production!=null) ? v.block_production.toFixed(1)+'%' : '—'} this epoch</span>
+                        <span className='text-secondary'>Vote success</span><span>{v.vote_success.toFixed(1)}% this epoch</span>
+                    </div>
+                ) : <div className='text-secondary'>Leader not in the Stakewiz validator list</div>}
+                <div className='text-secondary mt-1'>
+                    Leader window: {produced.length} blocks, {selected.window.filter((w) => w.skipped).length} skipped · ◎ {(windowFees/1e9).toFixed(5)} fees
+                </div>
+                {(!s.skipped && !s.missed) ? (
+                    <a className='d-inline-block mt-2' href={config.EXPLORER_BLOCK_BASE+s.slot} target='_blank' rel='noreferrer'>
+                        View block on Solscan<i className='bi bi-box-arrow-up-right ms-1'></i>
+                    </a>
+                ) : null}
+            </div>
+        );
     }
 
     const statusBadge = {
@@ -307,9 +351,9 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
     const observed = totals.blocks + totals.skipped;
 
     return (
-        <NetworkCard title='Live blocks' tooltip='Confirmed blocks streamed from a public Solana RPC as they are produced, grouped by leader. Each block is ranked as it arrives by the fee reward it earned its leader, against every block seen in about the last 5 minutes. Hover a block for its value, or a leader for their Stakewiz stats.' full={true}>
+        <NetworkCard title='Live blocks' tooltip='Confirmed blocks streamed from a public Solana RPC as they are produced, grouped by leader. Each block is ranked as it arrives by the fee reward it earned its leader, against every block seen in about the last 5 minutes. Hover a block to pause the stream and see its details.' full={true}>
             <div className='d-flex flex-wrap align-items-center gap-3 small mb-1'>
-                {statusBadge}
+                {(selected && status === 'live') ? <span className='badge bg-info text-dark'>❚❚ Paused while hovering</span> : statusBadge}
                 <span>Slot <span className='fw-bold' style={{color: COLORS.cyan}}>{(latest) ? formatNumber(latest) : '—'}</span></span>
                 <span><span className='fw-bold' style={{color: COLORS.purple}}>{(performance) ? Math.round(performance.slotMs) : '—'}ms</span> slots</span>
                 <span><span className='fw-bold' style={{color: COLORS.teal}}>{(performance) ? formatNumber(performance.tps) : '—'}</span> TPS</span>
@@ -323,6 +367,7 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
                     <LegendItem dot={{border: '2px dashed '+UNKNOWN_COLOR}} label='not watched' tooltip='Slots that passed while this tab was in the background or the stream was reconnecting, so they were not streamed.' />
                 </span>
             </div>
+            <div className='network-live-wrap' onMouseLeave={clearSelection}>
             <div className='network-live-strip'>
                 {(next) ? (
                     <div className='network-leader-group next' key={'next-'+next.leader}>
@@ -333,22 +378,22 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
                     </div>
                 ) : null}
                 {(groups.length === 0) ? <div className='text-secondary small p-2'>Waiting for blocks…</div> : groups.map((g) => (
-                    <OverlayTrigger key={g.slots[g.slots.length - 1].slot} placement='bottom' overlay={(g.missed) ? missedTooltip(g.leader, g.slots) : leaderTooltip(g.leader, g.slots)}>
-                        <div className={'network-leader-group'+((g.missed) ? ' missed' : '')}>
+                        <div key={g.slots[g.slots.length - 1].slot} className={'network-leader-group'+((g.missed) ? ' missed' : '')}>
                             <div className='network-leader-name'>{(g.missed && !g.leader) ? 'Not watched' : renderLeaderName(g.leader)}</div>
                             <div className='d-flex gap-1'>
                                 {g.slots.map((s) => (
                                     <div
                                         key={s.slot}
-                                        className={'network-block'+((s.missed) ? ' missed' : (s.skipped) ? ' skipped' : '')}
+                                        className={'network-block'+((s.missed) ? ' missed' : (s.skipped) ? ' skipped' : '')+((selected?.slot.slot === s.slot) ? ' selected' : '')}
                                         style={{'--block': RANK_COLORS[s.rank ?? 'warming']} as CSSProperties}
-                                        title={'Slot '+formatNumber(s.slot)+((s.missed) ? ' · not watched' : (s.skipped) ? ' · skipped' : (s.feeReward!=null) ? ' · ◎ '+(s.feeReward/1e9).toFixed(5)+' fees'+((s.ratio!=null) ? ' · '+s.ratio.toFixed(2)+'× median recent block' : ' · ranking after '+RANK_MIN_BLOCKS+' blocks') : '')}
+                                        onMouseEnter={(e) => selectBlock(e, s, g.leader, g.slots)}
                                     ></div>
                                 ))}
                             </div>
                         </div>
-                    </OverlayTrigger>
                 ))}
+            </div>
+            {renderBlockCard()}
             </div>
         </NetworkCard>
     );

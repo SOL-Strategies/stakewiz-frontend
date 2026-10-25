@@ -6,6 +6,7 @@ import axios from 'axios';
 import {Chart} from 'react-google-charts'
 import {Spinner} from './common'
 import { validatorI, WizWeightingsI } from './validator/interfaces';
+import { clientVersion } from './validator/common';
 import * as browser from 'lib/browser';
 import WizEmblem from '../public/images/emblem.svg'
 import ordinal from 'ordinal';
@@ -455,7 +456,7 @@ class WizScoreBody extends React.Component<{
                                 <WizScoreRow
                                     label='Version penalty'
                                     tooltip="A penalty is applied for running an outdated or not recommended software version."
-                                    value={this.props.validator.version}
+                                    value={clientVersion(this.props.validator)}
                                     score={this.props.validator.invalid_version_score}
                                     addPercent={true}
                                     threshold='0'

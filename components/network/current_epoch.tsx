@@ -1,5 +1,6 @@
 import { FC } from "react";
 import { clusterStatsI, PercentilesI, validatorI } from '../validator/interfaces';
+import { UNREPORTED_CLIENTS } from '../validator/common';
 import { NetworkCard, KpiTile, StatGrid, StatTile, COLORS, percent, sol, formatNumber } from './common';
 
 const range = (p: PercentilesI | null, format: (n: number) => string) => (p) ? 'p10 '+format(p.p10)+' · p90 '+format(p.p90) : null;
@@ -23,9 +24,9 @@ export const nakamotoCoefficient = (validators: validatorI[], threshold: number)
 export const NetworkHealth: FC<{clusterStats: clusterStatsI, validators: validatorI[]}> = ({clusterStats, validators}) => {
     const b = clusterStats?.block_stats;
     const vote = clusterStats?.vote_success;
-    const staked = (validators || []).filter((v) => v.activated_stake > 0);
-    const totalStake = staked.reduce((sum, v) => sum + v.activated_stake, 0);
-    const jitoShare = (totalStake > 0) ? staked.filter((v) => v.is_jito).reduce((sum, v) => sum + v.activated_stake, 0)/totalStake : null;
+    const largestClient = (clusterStats?.clients || [])
+        .filter((c) => !UNREPORTED_CLIENTS.includes(c.client))
+        .sort((a, b) => b.stake_pct - a.stake_pct)[0];
 
     return (
         <NetworkCard title='Network health this epoch' tooltip='Stakewiz measures across all validators for the current epoch to date. Rings show where the network median sits; ranges are across validators.' full={true}>
@@ -71,11 +72,12 @@ export const NetworkHealth: FC<{clusterStats: clusterStatsI, validators: validat
                     tooltip='Alpenglow tolerates up to 20% of stake acting maliciously plus a further 20% offline. These are the fewest validators that together hold more than 20% and 40% of stake. Higher is more decentralised.'
                 />
                 <KpiTile
-                    label='Jito stake'
-                    value={(jitoShare!=null) ? percent(jitoShare) : '—'}
-                    detail='running Jito with a MEV commission'
+                    label={(largestClient) ? 'of stake runs '+largestClient.client : 'Largest client'}
+                    value={(largestClient) ? parseFloat(largestClient.stake_pct.toFixed(1))+'%' : '—'}
+                    detail={(largestClient) ? formatNumber(largestClient.validators)+' validators · largest client' : null}
                     accent={COLORS.orange}
-                    ring={jitoShare ?? 0}
+                    ring={(largestClient) ? largestClient.stake_pct/100 : 0}
+                    tooltip='The validator client run by the most stake, as reported by each node. A single client with a large share of stake is a risk if it has a bug.'
                 />
             </div>
         </NetworkCard>

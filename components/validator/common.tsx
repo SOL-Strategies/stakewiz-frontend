@@ -28,6 +28,15 @@ export const blockProductionColor = (
     block_production_median: number | null
 ) => networkSpreadColor(block_production, block_production_p10, block_production_median) ?? '#55bb55';
 
+// Clients the API uses when a node does not report one
+export const UNREPORTED_CLIENTS = ['Not reported', 'Unknown'];
+
+// Client and version together, e.g. 'AgaveBam 4.3.2', or just the version when the client is not reported
+export const clientVersion = (validator: validatorI) => {
+    if(validator.client && !UNREPORTED_CLIENTS.includes(validator.client)) return validator.client+' '+validator.version;
+    return validator.version;
+}
+
 export const StakeLabel: FC<{stake: number}> = ({stake}) => {
     
     if(stake!=null) {

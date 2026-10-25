@@ -1310,6 +1310,44 @@ a:hover {
   animation:none;
 }
 
+.network-live-wrap {
+  position:relative;
+}
+
+.network-block.selected {
+  transform:translateY(-3px) scale(1.15);
+  outline:2px solid #fff;
+  outline-offset:1px;
+}
+
+.network-block-card {
+  position:absolute;
+  top:100%;
+  z-index:30;
+  max-width:100%;
+  padding:0.75rem 0.85rem;
+  border-radius:0.6rem;
+  background:#1d1f22;
+  border:1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:0 0.75rem 2rem rgba(0, 0, 0, 0.6);
+  animation:network-card-in 0.15s ease-out;
+}
+
+.network-block-card a {
+  color:#0dcaf0;
+}
+
+.network-block-card-grid {
+  display:grid;
+  grid-template-columns:auto 1fr;
+  column-gap:0.75rem;
+  row-gap:0.15rem;
+}
+
+@keyframes network-card-in {
+  from { opacity:0; transform:translateY(-4px); }
+}
+
 .network-legend-item {
   cursor:help;
   text-decoration:underline dotted rgba(255, 255, 255, 0.35);
