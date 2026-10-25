@@ -340,6 +340,18 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
         setSelected(null);
     }
 
+    // The leader keeps all priority fees and half of base fees; the other half of base fees is burned
+    const renderFeeBreakdown = (slot: number) => {
+        const d = details.current.get(slot);
+        if(!d || d === 'loading' || d === 'error') return null;
+        const baseKept = (d.fees - d.priorityFees)/2;
+        return (
+            <div className='text-secondary' title='Leaders keep all priority fees and half of base fees; the other half of base fees is burned.'>
+                ◎ {(d.priorityFees/1e9).toFixed(6)} priority + ◎ {(baseKept/1e9).toFixed(6)} base
+            </div>
+        );
+    }
+
     const renderBlockDetails = (slot: number) => {
         const d = details.current.get(slot);
         if(d === 'error') return <><span className='text-secondary'>Details</span><span className='text-secondary'>Could not load the block</span></>;
@@ -348,7 +360,6 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
             <>
                 <span className='text-secondary'>Transactions</span><span>{formatNumber(d.transactions)}{(d.failed > 0) ? <span className='text-secondary'> · {formatNumber(d.failed)} failed</span> : null}</span>
                 <span className='text-secondary'>Compute units</span><span>{formatNumber(d.computeUnits/1e6, 2)}M</span>
-                <span className='text-secondary'>Fees</span><span>◎ {(d.fees/1e9).toFixed(6)}<span className='text-secondary'> · ◎ {(d.priorityFees/1e9).toFixed(6)} priority</span></span>
             </>
         );
     }
@@ -374,7 +385,10 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
                     {(s.feeReward!=null) ? (
                         <>
                             <span className='text-secondary'>Fee reward</span>
-                            <span>◎ {(s.feeReward/1e9).toFixed(6)}{(s.ratio!=null) ? <span className='text-secondary'> · {s.ratio.toFixed(2)}× median</span> : null}</span>
+                            <span>
+                                ◎ {(s.feeReward/1e9).toFixed(6)}{(s.ratio!=null) ? <span className='text-secondary'> · {s.ratio.toFixed(2)}× median</span> : null}
+                                {renderFeeBreakdown(s.slot)}
+                            </span>
                         </>
                     ) : null}
                     {(!s.skipped && !s.missed) ? renderBlockDetails(s.slot) : null}
