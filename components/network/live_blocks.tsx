@@ -26,6 +26,32 @@ const RANK_LABELS: {[rank in BlockRank]: string} = {
 };
 
 const CARD_WIDTH = 320;
+// Hovered blocks are fetched in full (~1MB) once the pointer settles, and kept for re-hovering
+const DETAILS_DELAY_MS = 250;
+const DETAILS_CACHE = 40;
+const BASE_FEE_PER_SIGNATURE = 5000;
+
+interface BlockDetailsI {
+    transactions: number;
+    failed: number;
+    computeUnits: number;
+    fees: number;
+    priorityFees: number;
+}
+
+// Totals for one block from getBlock with full transaction details
+const summariseBlock = (block): BlockDetailsI => {
+    let details: BlockDetailsI = {transactions: 0, failed: 0, computeUnits: 0, fees: 0, priorityFees: 0};
+    for(const t of block.transactions || []) {
+        const meta = t.meta || {};
+        details.transactions++;
+        if(meta.err) details.failed++;
+        details.computeUnits += meta.computeUnitsConsumed || 0;
+        details.fees += meta.fee || 0;
+        details.priorityFees += Math.max(0, (meta.fee || 0) - BASE_FEE_PER_SIGNATURE*(t.transaction?.signatures?.length || 1));
+    }
+    return details;
+}
 
 const RANK_COLORS: {[rank in BlockRank]: string} = {
     top: COLORS.green,
@@ -91,6 +117,9 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
     // While a block is hovered the strip holds still; new blocks keep buffering and appear on mouse out
     const hoverPaused = useRef(false);
     const [selected, setSelected] = useState<{slot: LiveSlotI, leader: string, window: LiveSlotI[], left: number}>(null);
+    const details = useRef<Map<number, BlockDetailsI | 'loading' | 'error'>>(new Map());
+    const detailsTimer = useRef(null);
+    const [, setDetailsVersion] = useState(0);
 
     const byIdentity = useRef<{[identity: string]: validatorI}>({});
     useEffect(() => {
@@ -286,11 +315,42 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
         const block = e.currentTarget.getBoundingClientRect();
         const centre = block.left - wrap.left + block.width/2;
         setSelected({slot, leader, window, left: Math.max(0, Math.min(wrap.width - Math.min(CARD_WIDTH, wrap.width), centre - CARD_WIDTH/2))});
+        clearTimeout(detailsTimer.current);
+        if(!slot.skipped && !slot.missed && !details.current.has(slot.slot)) {
+            detailsTimer.current = setTimeout(() => loadDetails(slot.slot), DETAILS_DELAY_MS);
+        }
+    }
+
+    const loadDetails = (slot: number) => {
+        const cache = details.current;
+        cache.set(slot, 'loading');
+        setDetailsVersion((v) => v + 1);
+        rpc('getBlock', [slot, {commitment: 'confirmed', encoding: 'json', transactionDetails: 'full', rewards: false, maxSupportedTransactionVersion: 1}])
+            .then((block) => cache.set(slot, summariseBlock(block)))
+            .catch((e) => { console.log(e); cache.set(slot, 'error'); })
+            .finally(() => {
+                while(cache.size > DETAILS_CACHE) cache.delete(cache.keys().next().value);
+                setDetailsVersion((v) => v + 1);
+            });
     }
 
     const clearSelection = () => {
         hoverPaused.current = false;
+        clearTimeout(detailsTimer.current);
         setSelected(null);
+    }
+
+    const renderBlockDetails = (slot: number) => {
+        const d = details.current.get(slot);
+        if(d === 'error') return <><span className='text-secondary'>Details</span><span className='text-secondary'>Could not load the block</span></>;
+        if(!d || d === 'loading') return <><span className='text-secondary'>Details</span><span className='text-secondary'>Loading block…</span></>;
+        return (
+            <>
+                <span className='text-secondary'>Transactions</span><span>{formatNumber(d.transactions)}{(d.failed > 0) ? <span className='text-secondary'> · {formatNumber(d.failed)} failed</span> : null}</span>
+                <span className='text-secondary'>Compute units</span><span>{formatNumber(d.computeUnits/1e6, 2)}M</span>
+                <span className='text-secondary'>Fees</span><span>◎ {(d.fees/1e9).toFixed(6)}<span className='text-secondary'> · ◎ {(d.priorityFees/1e9).toFixed(6)} priority</span></span>
+            </>
+        );
     }
 
     const renderBlockCard = () => {
@@ -317,6 +377,7 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
                             <span>◎ {(s.feeReward/1e9).toFixed(6)}{(s.ratio!=null) ? <span className='text-secondary'> · {s.ratio.toFixed(2)}× median</span> : null}</span>
                         </>
                     ) : null}
+                    {(!s.skipped && !s.missed) ? renderBlockDetails(s.slot) : null}
                     {(s.missed) ? <><span className='text-secondary'>Status</span><span>Passed while the stream was paused</span></> : null}
                     {(s.skipped) ? <><span className='text-secondary'>Status</span><span>No block produced in this slot</span></> : null}
                 </div>
@@ -327,6 +388,7 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
                         <span className='text-secondary'>Wiz Score</span><span>{v.wiz_score.toFixed(1)}% (#{v.rank})</span>
                         <span className='text-secondary'>Block production</span><span>{(v.block_production!=null) ? v.block_production.toFixed(1)+'%' : '—'} this epoch</span>
                         <span className='text-secondary'>Vote success</span><span>{v.vote_success.toFixed(1)}% this epoch</span>
+                        <span className='text-secondary'>Inclusion success</span><span>{(v.inclusion_success!=null) ? v.inclusion_success.toFixed(1)+'% this epoch' : '— (under 12 leader slots)'}</span>
                     </div>
                 ) : <div className='text-secondary'>Leader not in the Stakewiz validator list</div>}
                 <div className='text-secondary mt-1'>
