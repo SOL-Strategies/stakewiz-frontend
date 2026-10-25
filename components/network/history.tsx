@@ -114,20 +114,26 @@ export const BlockRevenueHistory: FC = () => {
 
     let data: any[] = null;
     if(stats) {
-        data = [['Epoch', 'Base fees', 'Priority fees', 'Jito tips']];
+        const sol = (n: number) => ({v: n, f: '◎ '+n.toFixed(5)});
+        data = [['Epoch', 'Base fees', 'Priority fees', 'Jito tips', {role: 'annotation'}]];
         for(const c of [...stats].reverse()) {
             const blocks = c.blocks_produced || 1;
+            const base = c.fee_base_total/blocks/1e9;
+            const priority = c.fee_priority_total/blocks/1e9;
+            // Tips are incomplete before epoch 1067
+            const tips = (c.epoch >= 1067) ? c.tips_per_block/1e9 : 0;
             data.push([
                 c.epoch+((c.final) ? '' : '*'),
-                c.fee_base_total/blocks/1e9,
-                c.fee_priority_total/blocks/1e9,
-                (c.epoch >= 1067) ? c.tips_per_block/1e9 : null
+                sol(base),
+                sol(priority),
+                (c.epoch >= 1067) ? sol(tips) : {v: 0, f: 'incomplete'},
+                '◎ '+(base + priority + tips).toFixed(5)
             ]);
         }
     }
 
     return (
-        <NetworkCard title='Revenue per block' tooltip='Average SOL per produced block each epoch, split into base fees, priority fees and Jito tips. Tips are complete from epoch 1067. * marks the epoch in progress.'>
+        <NetworkCard title='Revenue per block' tooltip='Average SOL per produced block each epoch, split into base fees, priority fees and Jito tips, with the total above each column. Tips are complete from epoch 1067, so earlier totals are fees only. * marks the epoch in progress.'>
             {(data==null) ? <Spinner /> : (
                 <Chart
                     chartType='ColumnChart'
@@ -139,7 +145,9 @@ export const BlockRevenueHistory: FC = () => {
                         colors: [COLORS.grey, COLORS.amber, COLORS.orange],
                         legend: { position: 'top', textStyle: { color: '#fff' } },
                         bar: { groupWidth: '55%' },
-                        vAxis: { format: '◎ #.###', gridlines: { color: '#3a3a3a' }, textStyle: { color: '#fff' }, minValue: 0 },
+                        focusTarget: 'category',
+                        annotations: { alwaysOutside: true, textStyle: { color: '#fff', fontSize: 12, bold: true, auraColor: 'none' }, stem: { color: 'transparent' } },
+                        vAxis: { format: '◎ #.#####', gridlines: { color: '#3a3a3a' }, textStyle: { color: '#fff' }, minValue: 0 },
                         chartArea: { top: 35, left: 70, width: '82%', height: '70%' }
                     })}
                 />

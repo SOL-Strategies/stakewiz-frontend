@@ -4,14 +4,17 @@ import { NetworkCard, KpiTile, StatGrid, StatTile, COLORS, percent, sol, formatN
 
 const range = (p: PercentilesI | null, format: (n: number) => string) => (p) ? 'p10 '+format(p.p10)+' · p90 '+format(p.p90) : null;
 
-// Fewest validators that together hold over a third of stake (the superminority)
-export const nakamotoCoefficient = (validators: validatorI[]) => {
+// Alpenglow fault-tolerance thresholds as shares of stake
+export const STAKE_THRESHOLDS = [0.2, 0.4];
+
+// Fewest validators that together hold more than `threshold` of stake
+export const nakamotoCoefficient = (validators: validatorI[], threshold: number) => {
     const staked = validators.filter((v) => v.activated_stake > 0).sort((a, b) => b.activated_stake - a.activated_stake);
     const total = staked.reduce((sum, v) => sum + v.activated_stake, 0);
     let cumulative = 0;
     for(let i = 0; i < staked.length; i++) {
         cumulative += staked[i].activated_stake;
-        if(cumulative > total/3) return i + 1;
+        if(cumulative > total*threshold) return i + 1;
     }
     return staked.length;
 }
@@ -60,12 +63,12 @@ export const NetworkHealth: FC<{clusterStats: clusterStatsI, validators: validat
                     tooltip="A validator's typical block fees vs the median block in the same ~5 minute window. 1.00 is a typical block."
                 />
                 <KpiTile
-                    label='Nakamoto coefficient'
-                    value={(validators) ? formatNumber(nakamotoCoefficient(validators)) : '—'}
-                    detail='validators for 33.3% of stake'
+                    label='Nakamoto coefficient (20%)'
+                    value={(validators) ? formatNumber(nakamotoCoefficient(validators, STAKE_THRESHOLDS[0])) : '—'}
+                    detail={(validators) ? formatNumber(nakamotoCoefficient(validators, STAKE_THRESHOLDS[1]))+' validators for 40%' : null}
                     accent={COLORS.purple}
                     badge={<i className='bi bi-shield-check'></i>}
-                    tooltip='The fewest validators that together control more than a third of stake, enough to halt the network. Higher is more decentralised.'
+                    tooltip='Alpenglow tolerates up to 20% of stake acting maliciously plus a further 20% offline. These are the fewest validators that together hold more than 20% and 40% of stake. Higher is more decentralised.'
                 />
                 <KpiTile
                     label='Jito stake'
