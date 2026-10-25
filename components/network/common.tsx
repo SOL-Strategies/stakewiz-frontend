@@ -90,12 +90,10 @@ export const KpiTile: FC<{label: string, value: ReactNode, detail?: ReactNode, a
             {(ring!=null) ? <div className='network-ring' style={ringStyle}></div> : <div className='network-ring-number'>{badge}</div>}
             <div>
                 <div className='network-kpi-value'>{value}</div>
-                <div className='small'>
-                    {label}
-                    {(tooltip) ? <InfoTip text={tooltip} /> : null}
-                </div>
+                <div className='small'>{label}</div>
                 {(detail) ? <div className='small text-secondary'>{detail}</div> : null}
             </div>
+            {(tooltip) ? <span className='network-kpi-info'><InfoTip text={tooltip} /></span> : null}
         </div>
     );
 }

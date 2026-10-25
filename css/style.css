@@ -1138,12 +1138,20 @@ a:hover {
   border-radius:0.6rem;
   background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, transparent), rgba(255, 255, 255, 0.04));
   border:1px solid color-mix(in srgb, var(--accent) 45%, transparent);
-  transition:transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.network-kpi:hover {
-  transform:translateY(-2px);
-  box-shadow:0 0.5rem 1.5rem color-mix(in srgb, var(--accent) 30%, transparent);
+.network-kpi-info {
+  position:absolute;
+  left:0.55rem;
+  bottom:0.3rem;
+  font-size:0.8rem;
+  line-height:1;
+  color:rgba(255, 255, 255, 0.6);
+}
+
+.network-kpi-info .bi {
+  margin-left:0 !important;
+  cursor:help;
 }
 
 .network-kpi-value {
@@ -1284,7 +1292,7 @@ a:hover {
 
 @media only screen and (max-width: 575px) {
   .network-kpi-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0.5rem; }
-  .network-kpi { flex-direction:column; align-items:flex-start; gap:0.4rem; padding:0.6rem; }
+  .network-kpi { flex-direction:column; align-items:flex-start; gap:0.4rem; padding:0.6rem 0.6rem 1.4rem; }
   .network-ring, .network-ring-number { width:38px; height:38px; font-size:0.9rem; }
   .network-ring { -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px)); mask:radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px)); }
   .network-kpi-value { font-size:1.25rem; }
