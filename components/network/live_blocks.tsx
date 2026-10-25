@@ -3,7 +3,6 @@ import Link from "next/link";
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import config from '../../config.json'
 import { validatorI } from '../validator/interfaces';
-import { blockProductionColor } from '../validator/common';
 import { NetworkCard, COLORS, formatNumber } from './common';
 
 const MAX_SLOTS = 64;
@@ -12,6 +11,18 @@ const RECONNECT_MS = 3000;
 const PERFORMANCE_POLL_MS = 60000;
 const SCHEDULE_FETCH = 1000;
 const UNKNOWN_COLOR = '#64748b';
+// Each block is ranked against the blocks seen in roughly the last 5 minutes (~4.7 blocks per second)
+const RANK_WINDOW = 1400;
+const RANK_MIN_BLOCKS = 30;
+
+type BlockRank = 'top' | 'mid' | 'low' | 'warming';
+
+const RANK_COLORS: {[rank in BlockRank]: string} = {
+    top: COLORS.green,
+    mid: '#ddaa33',
+    low: COLORS.red,
+    warming: UNKNOWN_COLOR
+};
 
 interface LiveSlotI {
     slot: number;
@@ -19,6 +30,9 @@ interface LiveSlotI {
     time?: number;
     leader?: string;
     feeReward?: number;
+    // Fee reward relative to the median recent block, and where it falls among recent blocks
+    ratio?: number;
+    rank?: BlockRank;
 }
 
 interface PerformanceI {
@@ -38,7 +52,7 @@ const rpc = async (method: string, params: any[] = []) => {
 }
 
 // Confirmed blocks streamed from a public RPC websocket (blockSubscribe without transactions: ~0.5KB per block),
-// grouped into leader windows and coloured by each leader's Stakewiz block production
+// grouped into leader windows, with each block ranked on arrival by its fee reward against recent blocks
 export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
     const [slots, setSlots] = useState<LiveSlotI[]>([]);
     const [totals, setTotals] = useState({blocks: 0, skipped: 0, fees: 0});
@@ -51,6 +65,8 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
     // Leader schedule (slot -> identity) so skipped and upcoming slots have a leader too
     const schedule = useRef<{start: number, leaders: string[]}>(null);
     const scheduleLoading = useRef(false);
+    // Fee rewards of recent blocks, oldest first, for ranking each new block
+    const recentRewards = useRef<number[]>([]);
 
     const byIdentity = useRef<{[identity: string]: validatorI}>({});
     useEffect(() => {
@@ -78,6 +94,24 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
                 .finally(() => { scheduleLoading.current = false; });
         }
 
+        // Rank a block's fee reward against recent blocks: top half, below the median, or bottom 10%
+        const rankBlock = (lamports: number): {ratio?: number, rank: BlockRank} => {
+            const recent = recentRewards.current;
+            let result: {ratio?: number, rank: BlockRank} = {rank: 'warming'};
+            if(recent.length >= RANK_MIN_BLOCKS) {
+                const sorted = [...recent].sort((a, b) => a - b);
+                const p10 = sorted[Math.floor(sorted.length*0.1)];
+                const median = sorted[Math.floor(sorted.length*0.5)];
+                result = {
+                    ratio: (median > 0) ? lamports/median : undefined,
+                    rank: (lamports < p10) ? 'low' : (lamports < median) ? 'mid' : 'top'
+                };
+            }
+            recent.push(lamports);
+            if(recent.length > RANK_WINDOW) recent.shift();
+            return result;
+        }
+
         const handleBlock = (value) => {
             const block = value.block;
             if(!block) return;
@@ -90,7 +124,8 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
                 pending.current.push({slot: s, skipped: true, leader: leaderOf(s)});
             }
             const reward = (block.rewards || []).find((r) => r.rewardType === 'Fee');
-            pending.current.push({slot, skipped: false, time: block.blockTime, leader: reward?.pubkey ?? leaderOf(slot), feeReward: reward?.lamports});
+            const ranked = (reward) ? rankBlock(reward.lamports) : {rank: 'warming' as BlockRank};
+            pending.current.push({slot, skipped: false, time: block.blockTime, leader: reward?.pubkey ?? leaderOf(slot), feeReward: reward?.lamports, ...ranked});
             lastSlot.current = slot;
         }
 
@@ -205,16 +240,13 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
         if(v?.name) return v.name;
         return (identity) ? identity.slice(0, 4)+'…'+identity.slice(-4) : 'Unknown leader';
     }
-    const colorFor = (identity: string) => {
-        const v = validatorFor(identity);
-        if(!v || v.block_production==null) return UNKNOWN_COLOR;
-        return blockProductionColor(v.block_production, v.block_production_p10, v.block_production_median);
-    }
 
     const leaderTooltip = (identity: string, groupSlots: LiveSlotI[]) => {
         const v = validatorFor(identity);
         const produced = groupSlots.filter((s) => !s.skipped);
         const fees = produced.reduce((sum, s) => sum + (s.feeReward || 0), 0);
+        const ratios = produced.filter((s) => s.ratio!=null).map((s) => s.ratio);
+        const averageRatio = (ratios.length > 0) ? ratios.reduce((sum, r) => sum + r, 0)/ratios.length : null;
         return (
             <Tooltip>
                 <div className='fw-bold'>{nameFor(identity)}</div>
@@ -226,6 +258,7 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
                     </>
                 ) : <div>Not in the Stakewiz validator list</div>}
                 <div>{produced.length} blocks, {groupSlots.length - produced.length} skipped · ◎ {(fees/1e9).toFixed(4)} fees</div>
+                {(averageRatio!=null) ? <div>These blocks: {averageRatio.toFixed(2)}× the median recent block</div> : null}
             </Tooltip>
         );
     }
@@ -246,7 +279,7 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
     const observed = totals.blocks + totals.skipped;
 
     return (
-        <NetworkCard title='Live blocks' tooltip='Confirmed blocks streamed from a public Solana RPC as they are produced, grouped by leader. Each block is coloured by its leader block production in Stakewiz this epoch; hover a leader for details.' full={true}>
+        <NetworkCard title='Live blocks' tooltip='Confirmed blocks streamed from a public Solana RPC as they are produced, grouped by leader. Each block is ranked as it arrives by the fee reward it earned its leader, against every block seen in about the last 5 minutes. Hover a block for its value, or a leader for their Stakewiz stats.' full={true}>
             <div className='d-flex flex-wrap align-items-center gap-3 small mb-1'>
                 {statusBadge}
                 <span>Slot <span className='fw-bold' style={{color: COLORS.cyan}}>{(latest) ? formatNumber(latest) : '—'}</span></span>
@@ -254,9 +287,9 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
                 <span><span className='fw-bold' style={{color: COLORS.teal}}>{(performance) ? formatNumber(performance.tps) : '—'}</span> TPS</span>
                 <span><span className='fw-bold' style={{color: COLORS.red}}>{formatNumber(totals.skipped)}</span> skipped of {formatNumber(observed)} seen</span>
                 <span className='ms-auto text-secondary'>
-                    <span className='network-legend-dot' style={{background: COLORS.green}}></span>at or above median
-                    <span className='network-legend-dot' style={{background: '#ddaa33'}}></span>below median
-                    <span className='network-legend-dot' style={{background: COLORS.red}}></span>below p10
+                    <span className='network-legend-dot' style={{background: RANK_COLORS.top}}></span>top half
+                    <span className='network-legend-dot' style={{background: RANK_COLORS.mid}}></span>below median
+                    <span className='network-legend-dot' style={{background: RANK_COLORS.low}}></span>bottom 10%
                     <span className='network-legend-dot' style={{border: '2px dashed '+COLORS.red}}></span>skipped
                 </span>
             </div>
@@ -272,14 +305,14 @@ export const LiveBlocks: FC<{validators: validatorI[]}> = ({validators}) => {
                 {(groups.length === 0) ? <div className='text-secondary small p-2'>Waiting for blocks…</div> : groups.map((g) => (
                     <OverlayTrigger key={g.slots[g.slots.length - 1].slot} placement='bottom' overlay={leaderTooltip(g.leader, g.slots)}>
                         <div className='network-leader-group'>
-                            <div className='network-leader-name' style={{color: colorFor(g.leader)}}>{renderLeaderName(g.leader)}</div>
+                            <div className='network-leader-name'>{renderLeaderName(g.leader)}</div>
                             <div className='d-flex gap-1'>
                                 {g.slots.map((s) => (
                                     <div
                                         key={s.slot}
                                         className={'network-block'+((s.skipped) ? ' skipped' : '')}
-                                        style={{'--block': colorFor(g.leader)} as CSSProperties}
-                                        title={'Slot '+formatNumber(s.slot)+((s.skipped) ? ' · skipped' : (s.feeReward!=null) ? ' · ◎ '+(s.feeReward/1e9).toFixed(5)+' fees' : '')}
+                                        style={{'--block': RANK_COLORS[s.rank ?? 'warming']} as CSSProperties}
+                                        title={'Slot '+formatNumber(s.slot)+((s.skipped) ? ' · skipped' : (s.feeReward!=null) ? ' · ◎ '+(s.feeReward/1e9).toFixed(5)+' fees'+((s.ratio!=null) ? ' · '+s.ratio.toFixed(2)+'× median recent block' : ' · ranking after '+RANK_MIN_BLOCKS+' blocks') : '')}
                                     ></div>
                                 ))}
                             </div>
