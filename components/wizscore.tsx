@@ -12,6 +12,9 @@ import ordinal from 'ordinal';
 
 const API_URL = process.env.API_BASE_URL;
 
+// Published info items scored: name, logo, description and website
+const INFO_ITEMS = 4;
+
 function WizScoreRow(props) {
 
     const renderTooltip = () => (
@@ -89,6 +92,13 @@ class WizScoreBody extends React.Component<{
             })
     }
 
+    // The weightings only describe this validator's score when the versions match; while the backend
+    // switches versions /wiz_score can be ahead of the scores, so fall back to the previous layout
+    weightings() {
+        const w = this.state.weightings;
+        return (w && w.score_version === this.props.validator.score_version) ? w : undefined;
+    }
+
     // Weight as Wiz points in percent, e.g. 0.2 -> 20
     points(weight: number) {
         return parseFloat((weight*100).toFixed(2));
@@ -96,49 +106,52 @@ class WizScoreBody extends React.Component<{
 
     // Score version 84 rows, detected from the weightings (absent keys mean v83 rendering)
     hasVoteSuccessScore() {
-        return this.state.weightings?.vote_success_weight > 0;
+        return this.weightings()?.vote_success_weight > 0;
     }
 
     hasBlockProductionScore() {
-        return this.state.weightings?.skip_rate_source === 'block_production';
+        return this.weightings()?.skip_rate_source === 'block_production';
     }
 
     hasMevScore() {
-        return this.state.weightings?.mev_weight > 0;
+        return this.weightings()?.mev_weight > 0;
     }
 
     renderInfoCount() {
-        // info_score is a percentage; each of the 5 items is worth an equal share of info_weight
-        if(!this.state.weightings?.info_weight) return '-';
-        return Math.round(this.props.validator.info_score / (this.state.weightings.info_weight*100/5));
+        // info_score is Wiz points; each item is worth an equal share of info_weight
+        const w = this.weightings();
+        if(w?.info_weight) return Math.round(this.props.validator.info_score / (w.info_weight*100/INFO_ITEMS));
+        // Without matching weightings, count the published fields instead
+        const v = this.props.validator;
+        return [v.name, v.image, v.description, v.website].filter((f) => f).length;
     }
 
     infoTooltip() {
-        const w = this.state.weightings;
-        if(!w) return 'Score for each of 5 published validator info items, e.g. name, logo, description and website.';
-        return this.points(w.info_weight/5)+'% for each of 5 published validator info items, e.g. name, logo, description and website.';
+        const w = this.weightings();
+        if(!w) return 'Score for each published validator info item: name, logo, description and website.';
+        return this.points(w.info_weight/INFO_ITEMS)+'% for each published validator info item: name, logo, description and website.';
     }
 
     commissionTooltip() {
-        const w = this.state.weightings;
+        const w = this.weightings();
         if(!w) return 'Higher score for lower commission, up to the full commission weight at 0%.';
         return 'Up to +'+this.points(w.commission_weight)+'% score for commission of 0%. No score for '+(w.max_commission/100)+'% commission and above.';
     }
 
     operatingHistoryTooltip() {
-        const w = this.state.weightings;
+        const w = this.weightings();
         if(!w) return 'Score for operating history (counted from first epoch with stake).';
         return 'Up to +'+this.points(w.epoch_distance_weight)+'% for having at least '+w.epoch_distance_max+' epochs of history (counted from first epoch with stake).';
     }
 
     stakeWeightTooltip() {
-        const w = this.state.weightings;
+        const w = this.weightings();
         if(!w) return "Highest score at the median stake, 0% for any stake that is >= the threshold share of the largest validator's stake.";
         return 'Up to +'+this.points(w.stake_weight_weight)+"%, 0% for any stake that is >= "+this.points(w.stake_weight_threshold)+"% of the largest validator's stake.";
     }
 
     uptimeTooltip() {
-        const w = this.state.weightings;
+        const w = this.weightings();
         const base = 'Percentage of time a validator was not delinquent over the past 30 days (or since the validator was added to our database if less than 30 days).';
         if(!w) return base;
         return base+' Full +'+this.points(w.uptime_weight)+'% at 100%, falling linearly to 0 at '+this.points(w.uptime_cutoff)+'%.';
@@ -160,27 +173,36 @@ class WizScoreBody extends React.Component<{
     }
 
     blockProductionTooltip() {
-        const w = this.state.weightings;
+        const w = this.weightings();
         const benchmark = (this.props.validator.fee_capture_benchmark!=null) ? ' ('+this.props.validator.fee_capture_benchmark.toFixed(2)+')' : '';
-        return "Producing blocks and packing them well. Score = skip score × fee capture score. Skip score falls linearly from full at 0% skipped to 0 at "+w.skip_rate_cutoff_multiplier+"× the network skip rate this epoch. Fee capture score = this validator's fee capture index ÷ the network p90"+benchmark+", capped at 1. A validator that skips all its leader slots scores 0. Scored from 12 leader slots. Skips are penalised more heavily in the Wiz score than in the Block Packing gauge.";
+        return "Producing blocks and packing them well. Score = skip score × fee capture score. Skip score falls linearly from full at 0% skipped to 0 at "+w.skip_rate_cutoff_multiplier+"× the network skip rate this epoch. Fee capture score = this validator's fee capture index ÷ the network p90"+benchmark+", capped at 1. A validator that skips all its leader slots scores 0. Scored from 12 leader slots. Skips are penalised more heavily in the Wiz Score than in the block packing gauge.";
     }
 
     renderMevValue() {
         const v = this.props.validator;
         if(v.mev_ignored) return (v.is_jito) ? 'Not enough blocks' : 'Not eligible';
         if(v.mev_tips_per_block==null) return '—';
-        return '◎ '+v.mev_tips_per_block.toFixed(4)+'/block'+((v.mev_benchmark!=null) ? ' of ◎ '+v.mev_benchmark.toFixed(4) : '');
+        return (
+            <>
+                {'◎ '+v.mev_tips_per_block.toFixed(4)+' per block'}
+                {(v.mev_benchmark!=null) ? (
+                    <div className='small text-secondary'>
+                        network p90 ◎ {v.mev_benchmark.toFixed(4)}
+                    </div>
+                ) : null}
+            </>
+        );
     }
 
     renderVersion84Rows() {
         const v = this.props.validator;
-        const w = this.state.weightings;
+        const w = this.weightings();
         let rows = [];
         if(this.hasVoteSuccessScore()) {
             rows.push(
                 <WizScoreRow
                     key='vote-success'
-                    label='Vote Success'
+                    label='Vote success'
                     tooltip={"Share of the optimal vote rewards the validator earned this epoch: its own votes landing (voting) plus, as leader, including other validators' votes in its blocks (inclusion). Skipped leader slots earn no inclusion rewards and count against it. Scored linearly from 0 at "+this.points(w.vote_success_cutoff ?? 0)+"% to the full "+this.points(w.vote_success_weight)+"% at 100%."}
                     value={v.vote_success.toFixed(2)+'%'}
                     score={v.vote_success_score}
@@ -195,7 +217,7 @@ class WizScoreBody extends React.Component<{
             rows.push(
                 <WizScoreRow
                     key='block-production'
-                    label='Block Production'
+                    label='Block production'
                     tooltip={this.blockProductionTooltip()}
                     value={this.renderBlockProductionValue()}
                     score={v.skip_rate_score}
@@ -222,7 +244,7 @@ class WizScoreBody extends React.Component<{
                 <WizScoreRow
                     key='mev'
                     label='MEV'
-                    tooltip="Jito tips per produced block this epoch, net of the validator's MEV commission, against the 90th percentile of Jito validators, capped at 100%. Only for validators running Jito with a MEV commission set and at least 12 blocks with tips this epoch; for everyone else the weight is removed and the score scaled up."
+                    tooltip="Jito tips per produced block this epoch, net of the validator's MEV commission, scored against the network p90 (the 90th percentile of Jito validators) and capped at 100%. Only for validators running Jito with a MEV commission set and at least 12 blocks with tips this epoch; for everyone else the weight is removed and the score scaled up."
                     value={this.renderMevValue()}
                     score={(v.mev_ignored) ? 'scaled up' : v.mev_score}
                     addPercent={!v.mev_ignored}
@@ -353,7 +375,7 @@ class WizScoreBody extends React.Component<{
                                 {(this.hasVoteSuccessScore()) ? null : <>
                                 <WizScoreRow
                                     key='voting-success'
-                                    label='Voting Success'
+                                    label='Voting success'
                                     tooltip="Share of the optimal voting rewards the validator earned this epoch: how reliably its votes landed in the vote aggregates. Capped at 100%."
                                     value={this.renderSuccessValue(this.props.validator.voting_success)}
                                     score={this.renderSuccessScore(this.props.validator.voting_success_score)}
@@ -364,7 +386,7 @@ class WizScoreBody extends React.Component<{
                                 /> 
                                 <WizScoreRow
                                     key='inclusion-success'
-                                    label='Inclusion Success'
+                                    label='Inclusion success'
                                     tooltip="Share of the optimal leader vote rewards the validator earned this epoch by including other validators' votes in its blocks. Skipped leader slots count against it. Shown once the validator has had 12 leader slots this epoch; until then its score uses voting success."
                                     value={this.renderSuccessValue(this.props.validator.inclusion_success)}
                                     score={this.renderSuccessScore(this.props.validator.inclusion_success_score)}
@@ -378,7 +400,7 @@ class WizScoreBody extends React.Component<{
                                 {(this.hasBlockProductionScore()) ? null : <>
                                 <WizScoreRow
                                     key='skip-rate'
-                                    label='Slot Skip Rate'
+                                    label='Slot skip rate'
                                     tooltip="Percentage of leader slots in which this validator failed to produce a block. Score is ignored for low-staked validators."
                                     value={new Intl.NumberFormat().format(Number(this.props.validator.skip_rate.toFixed(1)))+'%'}
                                     score={this.props.validator.skip_rate_score}
@@ -400,9 +422,9 @@ class WizScoreBody extends React.Component<{
                                 />
                                 </>}
                                 <WizScoreRow
-                                    label='Published Information'
+                                    label='Published information'
                                     tooltip={this.infoTooltip()}
-                                    value={this.renderInfoCount()+' out of 5'}
+                                    value={this.renderInfoCount()+' out of '+INFO_ITEMS}
                                     score={this.props.validator.info_score}
                                     addPercent={true}
                                     threshold='0'
@@ -420,7 +442,7 @@ class WizScoreBody extends React.Component<{
                                     sign='+'
                                 /> 
                                 <WizScoreRow
-                                    label='Operating History'
+                                    label='Operating history'
                                     tooltip={this.operatingHistoryTooltip()}
                                     value={this.props.validator.first_epoch_distance+' epochs'}
                                     score={this.props.validator.epoch_distance_score}
@@ -430,7 +452,7 @@ class WizScoreBody extends React.Component<{
                                     sign='+'
                                 /> 
                                 <WizScoreRow
-                                    label='Stake Weight'
+                                    label='Stake weight'
                                     tooltip={this.stakeWeightTooltip()}
                                     value={this.props.validator.stake_weight+'%'}
                                     score={this.props.validator.stake_weight_score}
@@ -440,7 +462,7 @@ class WizScoreBody extends React.Component<{
                                     sign='+'
                                 />
                                 <WizScoreRow
-                                    label='Withdraw Authority'
+                                    label='Withdraw authority'
                                     tooltip="Having the vote account withdraw authority set to the validator's identity keypair is a bad security practice and incurs a -20% penalty."
                                     value={this.renderWithdrawAuthorityValue()}
                                     score={this.props.validator.withdraw_authority_score}
@@ -450,7 +472,7 @@ class WizScoreBody extends React.Component<{
                                     inverse={true}
                                 />
                                 <WizScoreRow
-                                    label={`ASN Concentration (${(this.props.validator.ip_asn) ? this.props.validator.ip_asn : 'N/A'})`}
+                                    label={`ASN concentration (${(this.props.validator.ip_asn) ? this.props.validator.ip_asn : 'N/A'})`}
                                     tooltip="Stake concentration by ASN (ASN can comprise multiple physical locations). Penalty applied relative to the highest-staked ASN (which incurs the max penalty)."
                                     value={this.props.validator.asn_concentration+'%'}
                                     score={this.props.validator.asn_concentration_score}
@@ -460,7 +482,7 @@ class WizScoreBody extends React.Component<{
                                     inverse={true}
                                 />
                                 <WizScoreRow
-                                    label={`City Concentration (${(this.props.validator.ip_city) ? this.props.validator.ip_city : 'N/A'})`}
+                                    label={`City concentration (${(this.props.validator.ip_city) ? this.props.validator.ip_city : 'N/A'})`}
                                     tooltip="Stake concentration by City (city can comprise multiple data centres). Penalty applied relative to the highest-staked city (which incurs the max penalty)."
                                     value={this.props.validator.city_concentration+'%'}
                                     score={this.props.validator.city_concentration_score}
@@ -470,7 +492,7 @@ class WizScoreBody extends React.Component<{
                                     inverse={true}
                                 />
                                 <WizScoreRow
-                                    label={`ASN + City Concentration (${(this.props.validator.ip_asn) ? this.props.validator.ip_asn : 'N/A'} + ${(this.props.validator.ip_city) ? this.props.validator.ip_city : 'N/A' })`}
+                                    label={`ASN + city concentration (${(this.props.validator.ip_asn) ? this.props.validator.ip_asn : 'N/A'} + ${(this.props.validator.ip_city) ? this.props.validator.ip_city : 'N/A' })`}
                                     tooltip="Stake concentration by City (city can comprise multiple data centres). Penalty applied relative to the highest-staked city (which incurs the max penalty)."
                                     value={this.props.validator.asncity_concentration+'%'}
                                     score={this.props.validator.asncity_concentration_score}
@@ -480,7 +502,7 @@ class WizScoreBody extends React.Component<{
                                     inverse={true}
                                 />
                                 <WizScoreRow
-                                    label={`TPU IP Concentration (${(this.props.validator.tpu_ip) ? this.props.validator.tpu_ip : 'N/A'})`}
+                                    label={`TPU IP concentration (${(this.props.validator.tpu_ip) ? this.props.validator.tpu_ip : 'N/A'})`}
                                     tooltip="Stake concentration by TPU IP. Penalty applied relative to the highest-staked TPU IP (which incurs the max penalty). A penalty here implies the validator may be using a shared relayer instead of running their own."
                                     value={this.props.validator.tpu_ip_concentration+'%'}
                                     score={this.props.validator.tpu_ip_concentration_score}
@@ -500,7 +522,7 @@ class WizScoreBody extends React.Component<{
                                     sign='+'
                                 />
                                 <WizScoreRow
-                                    label='Version Penalty'
+                                    label='Version penalty'
                                     tooltip="A penalty is applied for running an outdated or not recommended software version."
                                     value={this.props.validator.version}
                                     score={this.props.validator.invalid_version_score}
@@ -510,7 +532,7 @@ class WizScoreBody extends React.Component<{
                                     inverse={true}
                                 />
                                 <WizScoreRow
-                                    label='Superminority Penalty'
+                                    label='Superminority penalty'
                                     tooltip="A penalty is applied to validators in the superminority (highest 33.3% of stake weight)."
                                     value={this.renderSuperminorityValue()}
                                     score={this.props.validator.superminority_penalty}
@@ -728,7 +750,7 @@ class WizScoreWeightings extends React.Component<{},
                                     {this.state.weightings.info_weight}
                                 </td>
                                 <td>
-                                    The total weight of validator info (broken up into 5 equally weighted items, e.g. name, logo, website and description).
+                                    The total weight of validator info (broken up into 4 equally weighted items: name, logo, website and description).
                                 </td>
                             </tr>
                             <tr>
@@ -811,7 +833,7 @@ class WizScoreWeightings extends React.Component<{},
                             </tr>
                             <tr>
                                 <td>
-                                    ASN Concentration Weight
+                                    ASN concentration weight
                                 </td>
                                 <td>
                                     {this.state.weightings.asn_concentration_weight}
@@ -822,7 +844,7 @@ class WizScoreWeightings extends React.Component<{},
                             </tr>
                             <tr>
                                 <td>
-                                    City Concentration Weight
+                                    City concentration weight
                                 </td>
                                 <td>
                                     {this.state.weightings.city_concentration_weight}
@@ -833,7 +855,7 @@ class WizScoreWeightings extends React.Component<{},
                             </tr>
                             <tr>
                                 <td>
-                                    ASN+City Concentration Weight
+                                    ASN + city concentration weight
                                 </td>
                                 <td>
                                     {this.state.weightings.asn_city_concentration_weight}
@@ -845,7 +867,7 @@ class WizScoreWeightings extends React.Component<{},
 
                             <tr>
                                 <td>
-                                    TPU IP Concentration Weight
+                                    TPU IP concentration weight
                                 </td>
                                 <td>
                                     {this.state.weightings.tpu_ip_concentration_weight}
@@ -856,7 +878,7 @@ class WizScoreWeightings extends React.Component<{},
                             </tr>
                             <tr>
                                 <td>
-                                    Uptime Weight
+                                    Uptime weight
                                 </td>
                                 <td>
                                     {this.state.weightings.uptime_weight}
@@ -878,7 +900,7 @@ class WizScoreWeightings extends React.Component<{},
                             </tr>
                             <tr>
                                 <td>
-                                    Superminority Penalty
+                                    Superminority penalty
                                 </td>
                                 <td>
                                     {this.state.weightings.superminority_penalty}

@@ -124,7 +124,7 @@ export default function Home() {
                                 Why should I care about delinquency and commission changes?
                             </h3>
                             <p>
-                                If you&apos;re staking with a validator and they become delinquenty this means they are no longer voting and participating in the chain&apos;s consensus. Your staking rewards are a direct result of the validator&apos;s voting record, since every vote earns them &quot;credits&quot;. At the end of the epoch the blockchain awards staking rewards to stake accounts based on their validator&apos;s total credits.
+                                If you&apos;re staking with a validator and they become delinquent, they&apos;ve stopped voting and taking part in consensus. Your staking rewards depend directly on that: each epoch the validator earns rewards for its own votes landing and, when it&apos;s the leader, for including other validators&apos; votes in its blocks. Those rewards are shared with your stake account at the end of the epoch, so a delinquent validator earns you nothing for as long as it&apos;s down.
                             </p>
                             <p>
                                 With regards to commission, this of course means a change to how much you&apos;re receiving and how much the validator is charging you. It&apos;s as if Netflix started charging your credit card a different amount this month. Validators should (and many do) communicate changes in commission ahead of time. And of course a change can be down, not just up. However in case a validator doesn&apos;t announce this change, or tries to boundary-skim, you should know about this.
