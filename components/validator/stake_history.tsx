@@ -32,6 +32,27 @@ export const StakeHistoryChart: FC<{vote_identity: string, updateStake?: Functio
     const [dot, setDot] = useState<{x: number, y: number}>(null);
     const [open, setOpen] = useState(false);
     const closeTimer = useRef(null);
+    // The drawn chart and the projected point, kept in refs so the dot is placed from the latest data:
+    // the stake history and pending stake load separately, and the chart's 'ready' handler is bound once
+    const chartRef = useRef(null);
+    const target = useRef<{epoch: number, stake: number}>(null);
+
+    const positionDot = () => {
+        const chart = chartRef.current;
+        const t = target.current;
+        if(!chart || !t) return setDot(null);
+        // getChartLayoutInterface exists on Google core charts but is missing from the wrapper typings
+        const layout = chart.getChartLayoutInterface();
+        const x = Math.round(layout.getXLocation(t.epoch));
+        const y = Math.round(layout.getYLocation(t.stake));
+        if(!isFinite(x) || !isFinite(y)) return setDot(null);
+        // Redraws fire 'ready' again; only update when the position moves to avoid a render loop
+        setDot((previous) => (previous && previous.x === x && previous.y === y) ? previous : {x, y});
+    }
+
+    useEffect(() => {
+        positionDot();
+    }, [stakes, pending]);
 
     useEffect(() => {
         axios(API_URL+config.API_ENDPOINTS.validator_total_stakes+"/"+vote_identity, {
@@ -62,9 +83,12 @@ export const StakeHistoryChart: FC<{vote_identity: string, updateStake?: Functio
     const last = stakes[stakes.length - 1];
     const projected = last.stake + change;
     const changeColor = (change >= 0) ? GREEN : RED;
+    target.current = (hasPending) ? {epoch: last.epoch + 1, stake: projected} : null;
 
-    let data: any[] = [['Epoch', 'Stake', 'Pending']];
-    stakes.forEach((s) => data.push([s.epoch, s.stake, (hasPending && s.epoch === last.epoch) ? s.stake : null]));
+    // Column types are explicit: Google Charts cannot infer a type for a column that is all nulls.
+    // The pending series is only added when there are pending changes.
+    let data: any[] = [[{label: 'Epoch', type: 'number'}, {label: 'Stake', type: 'number'}, ...((hasPending) ? [{label: 'Pending', type: 'number'}] : [])]];
+    stakes.forEach((s) => data.push([s.epoch, s.stake, ...((hasPending) ? [(s.epoch === last.epoch) ? s.stake : null] : [])]));
     if(hasPending) data.push([last.epoch + 1, null, projected]);
 
     // Hovering the figure, the dot or the list keeps the list open; leaving all of them closes it
@@ -145,14 +169,9 @@ export const StakeHistoryChart: FC<{vote_identity: string, updateStake?: Functio
                 chartEvents={[{
                     eventName: 'ready',
                     callback: ({chartWrapper}) => {
-                        // Place the pulsing dot over the projected point
-                        if(!hasPending) return setDot(null);
-                        // getChartLayoutInterface exists on Google core charts but is missing from the wrapper typings
-                        const layout = (chartWrapper.getChart() as any).getChartLayoutInterface();
-                        const x = Math.round(layout.getXLocation(last.epoch + 1));
-                        const y = Math.round(layout.getYLocation(projected));
-                        // Redraws fire 'ready' again; only update when the position moves to avoid a render loop
-                        setDot((previous) => (previous && previous.x === x && previous.y === y) ? previous : {x, y});
+                        // Place the pulsing dot over the projected point once the chart has drawn
+                        chartRef.current = chartWrapper.getChart();
+                        positionDot();
                     }
                 }]}
             />
