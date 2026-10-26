@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef, useState } from "react";
+import { FC, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import config from '../../config.json'
 import { Spinner } from '../common'
@@ -8,6 +8,9 @@ const API_URL = process.env.API_BASE_URL;
 
 const GREEN = '#55bb55';
 const RED = '#bb5555';
+const GREY = '#94a3b8';
+// The projected point is drawn by the chart; these near-duplicate fills let CSS find and pulse it
+const MARKERS = {green: '#55bb56', red: '#bb5556', grey: '#94a3b9'};
 const CLOSE_DELAY_MS = 250;
 
 interface StakeAccountI {
@@ -25,34 +28,12 @@ const formatSol = (sol: number) => '◎ '+Math.round(sol).toLocaleString();
 const byAmount = (accounts: StakeAccountI[]) => [...accounts].sort((a, b) => parseFloat(b.delegated_amount) - parseFloat(a.delegated_amount));
 
 // Active stake over the last 30 epochs, with this epoch's pending activations and deactivations
-// projected one epoch ahead as a dashed line to a pulsing dot
+// projected one epoch ahead as a dashed line to a pulsing point (grey and flat when nothing is pending)
 export const StakeHistoryChart: FC<{vote_identity: string, updateStake?: Function}> = ({vote_identity, updateStake}) => {
     const [stakes, setStakes] = useState<{epoch: number, stake: number}[]>(null);
     const [pending, setPending] = useState<PendingStakeI>(null);
-    const [dot, setDot] = useState<{x: number, y: number}>(null);
     const [open, setOpen] = useState(false);
     const closeTimer = useRef(null);
-    // The drawn chart and the projected point, kept in refs so the dot is placed from the latest data:
-    // the stake history and pending stake load separately, and the chart's 'ready' handler is bound once
-    const chartRef = useRef(null);
-    const target = useRef<{epoch: number, stake: number}>(null);
-
-    const positionDot = () => {
-        const chart = chartRef.current;
-        const t = target.current;
-        if(!chart || !t) return setDot(null);
-        // getChartLayoutInterface exists on Google core charts but is missing from the wrapper typings
-        const layout = chart.getChartLayoutInterface();
-        const x = Math.round(layout.getXLocation(t.epoch));
-        const y = Math.round(layout.getYLocation(t.stake));
-        if(!isFinite(x) || !isFinite(y)) return setDot(null);
-        // Redraws fire 'ready' again; only update when the position moves to avoid a render loop
-        setDot((previous) => (previous && previous.x === x && previous.y === y) ? previous : {x, y});
-    }
-
-    useEffect(() => {
-        positionDot();
-    }, [stakes, pending]);
 
     useEffect(() => {
         axios(API_URL+config.API_ENDPOINTS.validator_total_stakes+"/"+vote_identity, {
@@ -74,57 +55,31 @@ export const StakeHistoryChart: FC<{vote_identity: string, updateStake?: Functio
             .catch(e => console.log(e));
     }, [vote_identity]);
 
-    if(stakes==null) {
-        return <Spinner />
-    }
+    // Derived values and the chart itself only change with the data, so hovering and opening
+    // the accounts panel doesn't redraw the chart (which would replace the hovered point)
+    const view = useMemo(() => {
+        if(stakes==null) return null;
 
-    const change = (pending) ? pending.activating.amount - pending.deactivating.amount : 0;
-    const hasPending = pending!=null && (pending.activating.count > 0 || pending.deactivating.count > 0);
-    const last = stakes[stakes.length - 1];
-    const projected = last.stake + change;
-    const changeColor = (change >= 0) ? GREEN : RED;
-    target.current = (hasPending) ? {epoch: last.epoch + 1, stake: projected} : null;
+        const change = (pending) ? pending.activating.amount - pending.deactivating.amount : 0;
+        const hasPending = pending!=null && (pending.activating.count > 0 || pending.deactivating.count > 0);
+        const last = stakes[stakes.length - 1];
+        const projected = last.stake + change;
+        const changeColor = (!hasPending) ? GREY : (change >= 0) ? GREEN : RED;
+        const marker = (!hasPending) ? MARKERS.grey : (change >= 0) ? MARKERS.green : MARKERS.red;
 
-    // Column types are explicit: Google Charts cannot infer a type for a column that is all nulls.
-    // The pending series is only added when there are pending changes.
-    let data: any[] = [[{label: 'Epoch', type: 'number'}, {label: 'Stake', type: 'number'}, ...((hasPending) ? [{label: 'Pending', type: 'number'}] : [])]];
-    stakes.forEach((s) => data.push([s.epoch, s.stake, ...((hasPending) ? [(s.epoch === last.epoch) ? s.stake : null] : [])]));
-    if(hasPending) data.push([last.epoch + 1, null, projected]);
+        // A dashed segment from the current epoch to the projected stake next epoch (flat when nothing is pending),
+        // ending in a point styled through the style role. Column types are explicit so Google Charts never has to
+        // infer a type from a column of nulls.
+        let data: any[] = [[
+            {label: 'Epoch', type: 'number'},
+            {label: 'Stake', type: 'number'},
+            {label: 'Next epoch', type: 'number'},
+            {type: 'string', role: 'style'}
+        ]];
+        stakes.forEach((s) => data.push([s.epoch, s.stake, (s.epoch === last.epoch) ? s.stake : null, null]));
+        data.push([last.epoch + 1, null, projected, 'point { size: 6; fill-color: '+marker+'; stroke-color: '+marker+'; visible: true; }']);
 
-    // Hovering the figure, the dot or the list keeps the list open; leaving all of them closes it
-    const show = () => {
-        clearTimeout(closeTimer.current);
-        setOpen(true);
-    }
-    const hide = () => {
-        clearTimeout(closeTimer.current);
-        closeTimer.current = setTimeout(() => setOpen(false), CLOSE_DELAY_MS);
-    }
-
-    const renderAccounts = (title: string, accounts: StakeAccountI[], amount: number, color: string) => (
-        <div className='stake-pending-column'>
-            <div className='fw-bold mb-1' style={{color}}>{title} · {formatSol(amount)}</div>
-            {(accounts.length === 0) ? <div className='text-secondary'>None</div> : byAmount(accounts).map((a) => (
-                <div key={a.pubkey} className='d-flex justify-content-between gap-2'>
-                    <a href={config.EXPLORER_ACCOUNT_BASE+a.pubkey} target='_blank' rel='noreferrer' className='text-white text-truncate'>
-                        {a.pubkey.slice(0, 4)}…{a.pubkey.slice(-4)}
-                    </a>
-                    <span className='text-nowrap'>{formatSol(parseFloat(a.delegated_amount))}</span>
-                </div>
-            ))}
-        </div>
-    );
-
-    return (
-        <div className='stake-history'>
-            {(hasPending) ? (
-                <div className='stake-pending-label small' onMouseEnter={show} onMouseLeave={hide}>
-                    <span className='fw-bold' style={{color: changeColor}}>{(change >= 0) ? '+' : '−'}{formatSol(Math.abs(change))}</span>
-                    <span className='text-secondary'> next epoch → {formatSol(projected)}</span>
-                </div>
-            ) : (
-                <div className='stake-pending-label small text-secondary'>No pending stake changes</div>
-            )}
+        const chart = (
             <Chart
                 chartType='LineChart'
                 width="100%"
@@ -134,8 +89,9 @@ export const StakeHistoryChart: FC<{vote_identity: string, updateStake?: Functio
                     backgroundColor: 'none',
                     colors: ['#fff', changeColor],
                     lineWidth: 2,
+                    pointSize: 0,
                     series: {
-                        1: { lineDashStyle: [4, 4], lineWidth: 2 }
+                        1: { lineDashStyle: [4, 4], lineWidth: 2, enableInteractivity: false }
                     },
                     legend:{
                         position:'none'
@@ -166,23 +122,57 @@ export const StakeHistoryChart: FC<{vote_identity: string, updateStake?: Functio
                     },
                     allowAsync: true
                 }}
-                chartEvents={[{
-                    eventName: 'ready',
-                    callback: ({chartWrapper}) => {
-                        // Place the pulsing dot over the projected point once the chart has drawn
-                        chartRef.current = chartWrapper.getChart();
-                        positionDot();
-                    }
-                }]}
             />
-            {(hasPending && dot) ? (
-                <div
-                    className='stake-pending-dot'
-                    style={{left: dot.x, top: dot.y, background: changeColor, color: changeColor}}
-                    onMouseEnter={show}
-                    onMouseLeave={hide}
-                ></div>
-            ) : null}
+        );
+        return {change, hasPending, last, projected, changeColor, chart};
+    }, [stakes, pending]);
+
+    if(view==null) {
+        return <Spinner />
+    }
+    const {change, hasPending, last, projected, changeColor} = view;
+
+    const isMarker = (target: EventTarget) => (target instanceof SVGElement) && target.tagName === 'circle' && Object.values(MARKERS).includes(target.getAttribute('fill'));
+
+    // Hovering the figure, the dot or the list keeps the list open; leaving all of them closes it
+    const show = () => {
+        clearTimeout(closeTimer.current);
+        setOpen(true);
+    }
+    const hide = () => {
+        clearTimeout(closeTimer.current);
+        closeTimer.current = setTimeout(() => setOpen(false), CLOSE_DELAY_MS);
+    }
+
+    const renderAccounts = (title: string, accounts: StakeAccountI[], amount: number, color: string) => (
+        <div className='stake-pending-column'>
+            <div className='fw-bold mb-1' style={{color}}>{title} · {formatSol(amount)}</div>
+            {(accounts.length === 0) ? <div className='text-secondary'>None</div> : byAmount(accounts).map((a) => (
+                <div key={a.pubkey} className='d-flex justify-content-between gap-2'>
+                    <a href={config.EXPLORER_ACCOUNT_BASE+a.pubkey} target='_blank' rel='noreferrer' className='text-white text-truncate'>
+                        {a.pubkey.slice(0, 4)}…{a.pubkey.slice(-4)}
+                    </a>
+                    <span className='text-nowrap'>{formatSol(parseFloat(a.delegated_amount))}</span>
+                </div>
+            ))}
+        </div>
+    );
+
+    return (
+        <div
+            className='stake-history'
+            onMouseOver={(e) => { if(hasPending && isMarker(e.target)) show(); }}
+            onMouseOut={(e) => { if(hasPending && isMarker(e.target)) hide(); }}
+        >
+            {(hasPending) ? (
+                <div className='stake-pending-label small' onMouseEnter={show} onMouseLeave={hide}>
+                    <span className='fw-bold' style={{color: changeColor}}>{(change >= 0) ? '+' : '−'}{formatSol(Math.abs(change))}</span>
+                    <span className='text-secondary'> next epoch → {formatSol(projected)}</span>
+                </div>
+            ) : (
+                <div className='stake-pending-label small text-secondary'>No pending stake changes</div>
+            )}
+            {view.chart}
             {(hasPending && open) ? (
                 <div className='stake-pending-panel small' onMouseEnter={show} onMouseLeave={hide}>
                     <div className='text-secondary mb-2'>
