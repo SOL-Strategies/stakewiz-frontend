@@ -112,6 +112,15 @@ input:focus {
   padding-top:20vh;
 }
 
+/* Inside a card the spinner takes a loaded chart's height (20rem) rather than the full screen */
+.validator-detail-flex-card #loading-spinner {
+  height:20rem;
+  padding-top:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
 #laine-img { 
   cursor:pointer;
 }
