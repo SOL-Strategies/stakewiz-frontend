@@ -119,6 +119,7 @@ export const RecentBlocks: FC<{vote_identity: string}> = ({vote_identity}) => {
                         <tr>
                             <th scope='col'>Slot</th>
                             <th scope='col' className='text-end'>Score</th>
+                            <th scope='col' className='text-end'>Txs</th>
                             <th scope='col' className='text-end'>CUs</th>
                             <th scope='col' className='text-end'>Fees</th>
                         </tr>
@@ -131,12 +132,13 @@ export const RecentBlocks: FC<{vote_identity: string}> = ({vote_identity}) => {
                                     {(b.block_time) ? <div className='small text-secondary'>{timeAgo(b.block_time)}</div> : null}
                                 </td>
                                 {(b.skipped) ? (
-                                    <td colSpan={3} className='text-end text-danger align-middle'>Skipped</td>
+                                    <td colSpan={4} className='text-end text-danger align-middle'>Skipped</td>
                                 ) : (
                                     <>
                                         <td className='text-end align-middle fw-bold' style={(b.block_production_score!=null) ? {color: scoreColor(b.block_production_score)} : null}>
                                             {(b.block_production_score!=null) ? (b.block_production_score*100).toFixed(0)+'%' : '—'}
                                         </td>
+                                        <td className='text-end align-middle' title={(b.tx_failed_count!=null) ? b.tx_failed_count.toLocaleString()+' failed' : undefined}>{(b.tx_count!=null) ? b.tx_count.toLocaleString() : '—'}</td>
                                         <td className='text-end align-middle'>{(b.cu_total!=null) ? formatCus(b.cu_total) : '—'}</td>
                                         <td className='text-end align-middle text-nowrap'>{(b.fee_total!=null) ? sol(b.fee_total) : '—'}</td>
                                     </>
