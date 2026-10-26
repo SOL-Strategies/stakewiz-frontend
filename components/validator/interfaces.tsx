@@ -296,3 +296,56 @@ export interface ClusterBlockStatsI extends BlockStatsI {
     validator_skip_rate: PercentilesI | null;
     validator_block_production: PercentilesI | null;
 }
+
+// /validator_blocks: recent leader slots, newest first. Amounts in lamports, ratios as fractions
+export interface ValidatorBlockI {
+    slot: number;
+    epoch: number;
+    identity: string;
+    skipped: boolean;
+    block_time: number | null;
+    // Fee capture vs the epoch p90 benchmark, capped at 1; 0 when skipped, null before the epoch has a benchmark
+    block_production_score: number | null;
+    tx_count?: number;
+    tx_vote_count?: number;
+    tx_failed_count?: number;
+    tx_with_priority_fee_count?: number;
+    cu_total?: number;
+    cost_units_total?: number;
+    fullness?: number | null;
+    fee_total?: number;
+    fee_base_total?: number;
+    fee_priority_total?: number;
+    priority_fee_median?: number | null;
+    tips_lamports?: number | null;
+    tip_tx_count?: number | null;
+    leader_reward_lamports?: number;
+    fee_capture_index?: number | null;
+    value_capture_index?: number | null;
+}
+
+export interface ValidatorBlocksSummaryI {
+    leader_slots: number;
+    blocks_produced: number;
+    skipped_slots: number;
+    skip_rate: number | null;
+    first_slot: number | null;
+    last_slot: number | null;
+    fee_total: number;
+    tips_lamports: number;
+    leader_reward_lamports: number;
+    fee_per_block: number | null;
+    tx_count: number;
+    txs_per_block: number | null;
+    failed_tx_share: number | null;
+    fullness: number | null;
+    fee_capture_index: number | null;
+    value_capture_index: number | null;
+    // Over the returned slots only: skip-rate score × score of the median block
+    block_production_score: number | null;
+}
+
+export interface ValidatorBlocksI {
+    blocks: ValidatorBlockI[];
+    summary: ValidatorBlocksSummaryI;
+}

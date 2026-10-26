@@ -1360,3 +1360,97 @@ a:hover {
   text-decoration:underline dotted rgba(255, 255, 255, 0.35);
   text-underline-offset:3px;
 }
+
+/* Validator page: recent blocks */
+.recent-blocks-scroll {
+  height:17.5rem;
+  overflow-y:auto;
+}
+
+.recent-blocks-scroll thead th {
+  position:sticky;
+  top:0;
+  z-index:1;
+}
+
+.recent-blocks-scroll td a {
+  text-decoration:none;
+}
+
+.recent-blocks-scroll td a:hover {
+  text-decoration:underline;
+}
+
+.recent-block-skipped td {
+  background-color:rgba(187, 85, 85, 0.18) !important;
+}
+
+.recent-block-new td {
+  animation:recent-block-flash 2s ease-out;
+}
+
+@keyframes recent-block-flash {
+  from { background-color:rgba(13, 202, 240, 0.35); }
+}
+
+/* Validator page: pending stake on the active stake chart */
+.stake-history {
+  position:relative;
+}
+
+.stake-pending-label {
+  position:absolute;
+  top:0;
+  right:0.5rem;
+  z-index:2;
+  cursor:default;
+}
+
+.stake-pending-dot {
+  position:absolute;
+  width:12px;
+  height:12px;
+  margin:-6px 0 0 -6px;
+  border-radius:50%;
+  z-index:2;
+  cursor:pointer;
+  animation:stake-pending-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes stake-pending-pulse {
+  0%, 100% { opacity:1; box-shadow:0 0 0 0 currentColor; }
+  50% { opacity:0.35; box-shadow:0 0 0 7px transparent; }
+}
+
+.stake-pending-panel {
+  position:absolute;
+  top:1.6rem;
+  right:0.5rem;
+  left:0.5rem;
+  max-height:17rem;
+  overflow-y:auto;
+  z-index:3;
+  padding:0.75rem;
+  border-radius:0.6rem;
+  background-color:#1d1f22;
+  border:1px solid #4a4d52;
+  box-shadow:0 0.75rem 2rem rgba(0, 0, 0, 0.6);
+}
+
+.stake-pending-columns {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:1rem;
+}
+
+.stake-pending-panel a {
+  text-decoration:none;
+}
+
+.stake-pending-panel a:hover {
+  text-decoration:underline;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stake-pending-dot, .recent-block-new td { animation:none; }
+}

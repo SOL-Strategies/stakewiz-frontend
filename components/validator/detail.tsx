@@ -9,7 +9,7 @@ import { Gauges } from './gauges';
 import { StakeHistoryChart } from './stake_history';
 import { WizScoreBody, WizScoreChart } from '../wizscore';
 import { DelinquencyChart } from './delinquency';
-import { EpochStakeChart } from './epoch_stake';
+import { RecentBlocks } from './recent_blocks';
 import { AlertForm } from '../alert';
 import { StakeDialog } from '../stake/single-stake';
 import { getCommissionHistory, getJitoCommissionHistory } from '../stake/common';
@@ -584,6 +584,7 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                                 <div className='card-body'>
                                     <StakeHistoryChart
                                         vote_identity={this.state.validator.vote_identity}
+                                        updateStake={(change) => this.updateStakeChange(change)}
                                     />
                                 </div>
                             </div>
@@ -592,15 +593,21 @@ class ValidatorDetail extends React.Component<validatorDetailI,
                             <div className='validator-detail-flex-opacity-bg'></div>
                             <div className='card text-light'>
                                 <div className='card-header'>
-                                    Stake changes this epoch: 
-                                    <StakeLabel
-                                        stake={(this.state.stake_change!==null) ? this.state.stake_change : 0}
-                                    />
+                                    Recent blocks
+                                    <OverlayTrigger
+                                        placement="bottom"
+                                        overlay={
+                                            <Tooltip>
+                                                This validator&apos;s most recent leader slots, newest first. Score is the block fee capture against the network p90 for the epoch, capped at 100%: green from 90%, red below 50%. Updates automatically.
+                                            </Tooltip>
+                                        }
+                                    >
+                                        <i className='bi bi-info-circle ms-2'></i>
+                                    </OverlayTrigger>
                                 </div>
-                                <div className='card-body epoch-stake-chart-container'>
-                                    <EpochStakeChart 
+                                <div className='card-body'>
+                                    <RecentBlocks
                                         vote_identity={this.state.validator.vote_identity}
-                                        updateStake={(change) => this.updateStakeChange(change)}
                                     />
                                 </div>
                             </div>
