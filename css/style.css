@@ -1119,7 +1119,9 @@ a:hover {
 }
 /* Network statistics page */
 .network-card-full {
-  width:100%;
+  /* Full row minus the card's m-1 margins; min-width:0 so wide content (the live block strip) can't stretch it */
+  width:calc(100% - 0.5rem);
+  min-width:0;
 }
 
 .network-stat-grid {
