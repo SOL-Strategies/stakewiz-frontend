@@ -934,7 +934,9 @@ class WizScoreChart extends React.Component<{
                         trendlines: {
                             0: {
                                 color:'#ffc107',
-                                type: 'exponential'
+                                type: 'exponential',
+                                // The default tooltip shows the fitted equation, which means nothing to readers
+                                tooltip: false
                             }
                         },
                         chartArea: {
