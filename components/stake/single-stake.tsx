@@ -245,7 +245,7 @@ export const StakeDialog: FC<{
                                 {(validator.block_production==null) ? '—' : parseFloat(validator.block_production.toFixed(1))+' %'}
                             </div>
                             <div>
-                                Block packing
+                                Block production
                             </div>
                         </div>
                         <div className='col'>
