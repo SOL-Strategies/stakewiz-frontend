@@ -1465,20 +1465,16 @@ a:hover {
   cursor:default;
 }
 
-.stake-pending-dot {
-  position:absolute;
-  width:12px;
-  height:12px;
-  margin:-6px 0 0 -6px;
-  border-radius:50%;
-  z-index:2;
+.stake-history svg circle[fill="#55bb56"],
+.stake-history svg circle[fill="#bb5556"],
+.stake-history svg circle[fill="#94a3b9"] {
   cursor:pointer;
   animation:stake-pending-pulse 2.4s ease-in-out infinite;
 }
 
 @keyframes stake-pending-pulse {
-  0%, 100% { opacity:1; box-shadow:0 0 0 0 currentColor; }
-  50% { opacity:0.35; box-shadow:0 0 0 7px transparent; }
+  0%, 100% { opacity:1; stroke-width:0; stroke-opacity:0.7; }
+  50% { opacity:0.45; stroke-width:10; stroke-opacity:0; }
 }
 
 .stake-pending-panel {
@@ -1511,5 +1507,5 @@ a:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .stake-pending-dot, .recent-block-new td, .recent-blocks-live { animation:none; }
+  .stake-history svg circle, .recent-block-new td, .recent-blocks-live { animation:none; }
 }
