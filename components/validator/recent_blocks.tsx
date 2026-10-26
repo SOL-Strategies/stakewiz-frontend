@@ -1,5 +1,6 @@
 import { FC, useEffect, useState } from "react";
 import axios from "axios";
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import config from '../../config.json'
 import { Spinner } from '../common'
 import { ValidatorBlockI, ValidatorBlocksI } from './interfaces';
@@ -8,6 +9,8 @@ const API_URL = process.env.API_BASE_URL;
 
 const BLOCK_LIMIT = 100;
 const POLL_MS = 5000;
+// Treat the connection as lost after this long without a successful refresh
+const STALE_MS = 3*POLL_MS;
 
 // Block production score is fee capture vs the epoch p90 benchmark, capped at 1
 const scoreColor = (score: number) => (score >= 0.9) ? '#55bb55' : (score < 0.5) ? '#bb5555' : '#ddaa33';
@@ -27,6 +30,8 @@ export const RecentBlocks: FC<{vote_identity: string}> = ({vote_identity}) => {
     const [data, setData] = useState<ValidatorBlocksI>(null);
     const [newest, setNewest] = useState<number>(null);
     const [failed, setFailed] = useState(false);
+    const [lastRefresh, setLastRefresh] = useState<number>(null);
+    const [now, setNow] = useState(Date.now());
 
     useEffect(() => {
         let stopped = false;
@@ -45,6 +50,7 @@ export const RecentBlocks: FC<{vote_identity: string}> = ({vote_identity}) => {
                     previousNewest = json.blocks[0]?.slot ?? previousNewest;
                     setData(json);
                     setFailed(false);
+                    setLastRefresh(Date.now());
                 })
                 .catch(e => {
                     console.log(e);
@@ -52,25 +58,50 @@ export const RecentBlocks: FC<{vote_identity: string}> = ({vote_identity}) => {
                 });
         }
 
+        // Refresh straight away when the tab becomes visible again
+        const onVisibility = () => { if(!document.hidden) load(); };
+
         load();
         const timer = setInterval(load, POLL_MS);
+        const clock = setInterval(() => setNow(Date.now()), 1000);
+        document.addEventListener('visibilitychange', onVisibility);
         return () => {
             stopped = true;
             clearInterval(timer);
+            clearInterval(clock);
+            document.removeEventListener('visibilitychange', onVisibility);
         }
     }, [vote_identity]);
 
+    // Green while polling succeeds, red once a refresh fails or none has succeeded for a while
+    const lost = failed || (lastRefresh!=null && now - lastRefresh > STALE_MS);
+    const age = (lastRefresh!=null) ? Math.max(0, Math.round((now - lastRefresh)/1000))+'s ago' : null;
+    const liveDot = (
+        <OverlayTrigger
+            placement='left'
+            overlay={
+                <Tooltip>
+                    {(lost) ? 'Connection lost · ' : ''}
+                    {(age) ? 'Last refresh: '+age : 'Connecting…'}
+                </Tooltip>
+            }
+        >
+            <span className={'recent-blocks-live'+((lost) ? ' lost' : '')}></span>
+        </OverlayTrigger>
+    );
+
     if(data==null) {
-        return (failed) ? <div className='text-secondary'>Could not load recent blocks.</div> : <Spinner />;
+        return <>{liveDot}{(failed) ? <div className='text-secondary'>Could not load recent blocks.</div> : <Spinner />}</>;
     }
 
     if(data.blocks.length === 0) {
-        return <div className='text-secondary'>No leader slots indexed for this validator yet.</div>;
+        return <>{liveDot}<div className='text-secondary'>No leader slots indexed for this validator yet.</div></>;
     }
 
     const s = data.summary;
     return (
         <div className='recent-blocks'>
+            {liveDot}
             <div className='d-flex flex-wrap gap-3 small mb-2'>
                 <span>
                     Score over last {s.leader_slots} slots:{' '}

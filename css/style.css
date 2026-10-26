@@ -1381,6 +1381,22 @@ a:hover {
   text-decoration:underline;
 }
 
+/* Live connection dot, top-right of the recent blocks card */
+.recent-blocks-live {
+  position:absolute;
+  top:0.95rem;
+  right:1rem;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#55bb55;
+  cursor:help;
+}
+
+.recent-blocks-live.lost {
+  background:#bb5555;
+}
+
 .recent-block-skipped td {
   background-color:rgba(187, 85, 85, 0.18) !important;
 }
