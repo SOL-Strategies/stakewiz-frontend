@@ -135,6 +135,7 @@ const TopBar: FC = () => {
                 <GlobalSearch mediaScreenHide="tablet-off" key="searchValidatorDesktop" elementID="searchValidatorDesktop" />
                 <Nav.Link href="/" className='text-white'>Home</Nav.Link>
                 <Nav.Link href="/stakes" className='text-white'>My Stakes</Nav.Link>
+                <Nav.Link href="/network" className='text-white'>Network</Nav.Link>
                 <Nav.Link href="/faq" className='text-white'>FAQs</Nav.Link>
                 <Nav.Link href="/validator/GE6atKoWiQ2pt3zL7N13pjNHjdLVys8LinG8qeJLcAiL" target="_new" className='text-warning fw-bold'>Stake with us</Nav.Link>
                 <a href="https://discord.gg/4qUCTsX9QV" target="_new" className='text-white me-2 nav-discord'>
@@ -165,6 +166,10 @@ class Footer extends React.Component {
                 <div className="col"> 
                 <Link href="/" passHref legacyBehavior>
                   <span className="text-white pointer" >Home</span>
+                </Link>
+                <br />
+                <Link href="/network" passHref legacyBehavior>
+                  <span className="text-white pointer" >Network statistics</span>
                 </Link>
                 <br />
                 <Link href="/faq" passHref legacyBehavior>
