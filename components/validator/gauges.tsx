@@ -92,13 +92,13 @@ export const Gauges: FC<{
                         </div>
                         </OverlayTrigger>
                         <div>
-                            Block packing
+                            Block production
                             <OverlayTrigger
                                 placement="bottom"
                                 overlay={
                                     <Tooltip>
-                                        Fee capture index minus skip rate. A market-typical block in every slot would be a 100% value.
-                                        {(block_production_median!=null) ? <><br />Network median {block_production_median.toFixed(1)}%, p10 {block_production_p10?.toFixed(1)}%.</> : null}
+                                        Fees earned per block compared with a typical block at the same time, multiplied by the share of leader slots produced. A typical block in every slot = 100%.
+                                        {(block_production_median!=null) ? <><br />Network median {block_production_median.toFixed(1)}%, p10 {block_production_p10?.toFixed(1)}% (validators with 50+ blocks this epoch).</> : null}
                                         {(block_production==null) ? <><br />{blockProductionInsufficient}</> : null}
                                     </Tooltip>
                                 }
