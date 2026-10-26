@@ -91,18 +91,17 @@ export const RecentBlocks: FC<{vote_identity: string}> = ({vote_identity}) => {
     );
 
     if(data==null) {
-        return <>{liveDot}{(failed) ? <div className='text-secondary'>Could not load recent blocks.</div> : <Spinner />}</>;
+        return <>{(failed) ? <div className='text-secondary'>Could not load recent blocks.</div> : <Spinner />}</>;
     }
 
     if(data.blocks.length === 0) {
-        return <>{liveDot}<div className='text-secondary'>No leader slots indexed for this validator yet.</div></>;
+        return <div className='d-flex align-items-center small'><span className='text-secondary'>No leader slots indexed for this validator yet.</span><span className='ms-auto d-flex align-items-center'>{liveDot}</span></div>;
     }
 
     const s = data.summary;
     return (
         <div className='recent-blocks'>
-            {liveDot}
-            <div className='d-flex flex-wrap gap-3 small mb-2'>
+            <div className='d-flex flex-wrap align-items-center gap-3 small mb-2'>
                 <span>
                     Score over last {s.leader_slots} slots:{' '}
                     {(s.block_production_score!=null) ? (
@@ -112,6 +111,7 @@ export const RecentBlocks: FC<{vote_identity: string}> = ({vote_identity}) => {
                 <span className='text-secondary'>
                     {s.blocks_produced} produced · <span className={(s.skipped_slots > 0) ? 'text-danger' : null}>{s.skipped_slots} skipped</span>
                 </span>
+                <span className='ms-auto d-flex align-items-center'>{liveDot}</span>
             </div>
             <div className='recent-blocks-scroll'>
                 <table className='table table-sm text-white table-dark mb-0'>

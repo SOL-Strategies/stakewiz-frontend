@@ -1381,20 +1381,24 @@ a:hover {
   text-decoration:underline;
 }
 
-/* Live connection dot, top-right of the recent blocks card */
+/* Live connection dot, right of the recent blocks summary line */
 .recent-blocks-live {
-  position:absolute;
-  top:0.95rem;
-  right:1rem;
+  display:inline-block;
   width:8px;
   height:8px;
   border-radius:50%;
   background:#55bb55;
   cursor:help;
+  animation:recent-blocks-live-flash 3s ease-in-out infinite;
 }
 
 .recent-blocks-live.lost {
   background:#bb5555;
+}
+
+@keyframes recent-blocks-live-flash {
+  0%, 100% { opacity:1; }
+  50% { opacity:0.2; }
 }
 
 .recent-block-skipped td {
@@ -1468,5 +1472,5 @@ a:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .stake-pending-dot, .recent-block-new td { animation:none; }
+  .stake-pending-dot, .recent-block-new td, .recent-blocks-live { animation:none; }
 }
