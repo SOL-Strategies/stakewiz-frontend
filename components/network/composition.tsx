@@ -1,6 +1,6 @@
 import { FC } from "react";
 import Chart from "react-google-charts";
-import { clusterStatsI, validatorI } from '../validator/interfaces';
+import { clusterStatsI, NetworkShareI, validatorI } from '../validator/interfaces';
 import { NetworkCard, COLORS, chartOptions, formatNumber } from './common';
 import { nakamotoCoefficient, STAKE_THRESHOLDS } from './current_epoch';
 
@@ -97,11 +97,11 @@ const StakeCurve: FC<{validators: validatorI[], totalStake: number}> = ({validat
     );
 }
 
-// Top entries of the network client split, with the remainder as 'Other'
-const clientShares = (clusterStats: clusterStatsI, key: 'stake_pct' | 'validators_pct', top = 7): [string, number][] => {
-    const sorted = [...(clusterStats?.clients || [])].sort((a, b) => b[key] - a[key]);
-    let rows: [string, number][] = sorted.slice(0, top).map((c) => [c.client, c[key]/100]);
-    const other = sorted.slice(top).reduce((sum, c) => sum + c[key], 0);
+// Top entries of a network split from /cluster_stats (percent shares across all staked nodes), with the remainder as 'Other'
+const apiShares = <T extends NetworkShareI>(list: T[], name: (entry: T) => string, key: 'stake_pct' | 'validators_pct', top = 7): [string, number][] => {
+    const sorted = [...list].sort((a, b) => b[key] - a[key]);
+    let rows: [string, number][] = sorted.slice(0, top).map((entry) => [name(entry), entry[key]/100]);
+    const other = sorted.slice(top).reduce((sum, entry) => sum + entry[key], 0);
     if(other > 0) rows.push(['Other', other/100]);
     return rows;
 }
@@ -110,24 +110,26 @@ export const NetworkComposition: FC<{validators: validatorI[], clusterStats: clu
     const staked = validators.filter((v) => v.activated_stake > 0);
     const totalStake = staked.reduce((sum, v) => sum + v.activated_stake, 0);
     const delinquent = staked.filter((v) => v.delinquent);
-    const hasClients = (clusterStats?.clients?.length ?? 0) > 0;
+    const clients = clusterStats?.clients || [];
+    const versions = clusterStats?.versions || [];
+    const countries = clusterStats?.countries || [];
 
     return (
         <>
             <StakeCurve validators={staked} totalStake={totalStake} />
             <NetworkCard title='Stake by client' tooltip='Share of active stake by the validator client each node reports.'>
-                <Donut rows={(hasClients) ? clientShares(clusterStats, 'stake_pct') : stakeShares(staked, (v) => v.client, totalStake, 7)} label='Client' />
+                <Donut rows={(clients.length > 0) ? apiShares(clients, (c) => c.client, 'stake_pct') : stakeShares(staked, (v) => v.client, totalStake, 7)} label='Client' />
             </NetworkCard>
-            {(hasClients) ? (
+            {(clients.length > 0) ? (
                 <NetworkCard title='Validators by client' tooltip='Share of validators by reported client, regardless of stake. Many small validators do not report a client.'>
-                    <ShareBars rows={clientShares(clusterStats, 'validators_pct')} label='Client' color={COLORS.cyan} />
+                    <ShareBars rows={apiShares(clients, (c) => c.client, 'validators_pct')} label='Client' color={COLORS.cyan} />
                 </NetworkCard>
             ) : null}
             <NetworkCard title='Stake by version' tooltip={formatNumber(staked.length)+' validators with stake, ◎ '+formatNumber(totalStake/1e6, 1)+'M active, '+delinquent.length+' delinquent.'}>
-                <Donut rows={stakeShares(staked, (v) => v.version, totalStake, 6)} label='Version' />
+                <Donut rows={(versions.length > 0) ? apiShares(versions, (v) => v.version, 'stake_pct', 6) : stakeShares(staked, (v) => v.version, totalStake, 6)} label='Version' />
             </NetworkCard>
             <NetworkCard title='Stake by country'>
-                <Donut rows={stakeShares(staked, (v) => v.ip_country, totalStake, 7)} label='Country' />
+                <Donut rows={(countries.length > 0) ? apiShares(countries, (c) => c.country, 'stake_pct') : stakeShares(staked, (v) => v.ip_country, totalStake, 7)} label='Country' />
             </NetworkCard>
             <NetworkCard title='Stake by hosting provider' tooltip='Autonomous system (network operator) hosting each validator.'>
                 <ShareBars rows={stakeShares(staked, (v) => (v.ip_asn) ? ((v.ip_org) ? v.ip_org.slice(0, 22) : v.ip_asn) : '', totalStake)} label='Provider' color={COLORS.teal} />
