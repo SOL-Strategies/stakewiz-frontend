@@ -112,6 +112,7 @@ export const NetworkComposition: FC<{validators: validatorI[], clusterStats: clu
     const delinquent = staked.filter((v) => v.delinquent);
     const clients = clusterStats?.clients || [];
     const versions = clusterStats?.versions || [];
+    const countries = clusterStats?.countries || [];
 
     return (
         <>
@@ -128,7 +129,7 @@ export const NetworkComposition: FC<{validators: validatorI[], clusterStats: clu
                 <Donut rows={(versions.length > 0) ? apiShares(versions, (v) => v.version, 'stake_pct', 6) : stakeShares(staked, (v) => v.version, totalStake, 6)} label='Version' />
             </NetworkCard>
             <NetworkCard title='Stake by country'>
-                <Donut rows={stakeShares(staked, (v) => v.ip_country, totalStake, 7)} label='Country' />
+                <Donut rows={(countries.length > 0) ? apiShares(countries, (c) => c.country, 'stake_pct') : stakeShares(staked, (v) => v.ip_country, totalStake, 7)} label='Country' />
             </NetworkCard>
             <NetworkCard title='Stake by hosting provider' tooltip='Autonomous system (network operator) hosting each validator.'>
                 <ShareBars rows={stakeShares(staked, (v) => (v.ip_asn) ? ((v.ip_org) ? v.ip_org.slice(0, 22) : v.ip_asn) : '', totalStake)} label='Provider' color={COLORS.teal} />

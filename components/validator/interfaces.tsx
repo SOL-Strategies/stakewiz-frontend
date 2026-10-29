@@ -153,9 +153,10 @@ export interface clusterStatsI {
     inclusion_success?: PercentilesI | null;
     // Current epoch to date (fractions); null briefly at the start of an epoch
     block_stats?: ClusterBlockStatsI | null;
-    // Network split by validator client and by version; activated_stake in lamports, percentages in percent
+    // Network split by validator client, version and country; activated_stake in lamports, percentages in percent
     clients?: ClientShareI[];
     versions?: VersionShareI[];
+    countries?: CountryShareI[];
 };
 
 export interface NetworkShareI {
@@ -171,6 +172,10 @@ export interface ClientShareI extends NetworkShareI {
 
 export interface VersionShareI extends NetworkShareI {
     version: string;
+}
+
+export interface CountryShareI extends NetworkShareI {
+    country: string;
 }
 
 export interface ValidatorBoxPropsI {
