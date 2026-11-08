@@ -160,10 +160,7 @@ export const Stakes: FC<{userPubkey: PublicKey, connection: Connection, connecte
                  
             })
 
-            chart_data.sort((a,b) => {
-                if(a[0] < b[0]) return -1
-                else return 1
-            })
+            chart_data.sort((a,b) => Number(a[0]) - Number(b[0]))
 
             rewards_chart = rewards_chart.concat(chart_data)
     
