@@ -506,8 +506,8 @@ const ValidatorBox: FC<ValidatorBoxPropsI> = ({validator,clusterStats,showWizMod
                         <Tooltip>
                             {(validator.block_production==null) ? BLOCK_PRODUCTION_INSUFFICIENT : (
                                 <>
-                                    Block packing (higher is better): fee capture index minus skip rate. A market-typical block in every slot would be a 100% value.
-                                    {(validator.block_production_median!=null) ? <><br />Network median {validator.block_production_median.toFixed(1)}%</> : null}
+                                    Block production (higher is better): fees earned per block compared with a typical block at the same time, multiplied by the share of leader slots produced. A typical block in every slot = 100%.
+                                    {(validator.block_production_median!=null) ? <><br />Network median {validator.block_production_median.toFixed(1)}% (validators with 50+ blocks this epoch)</> : null}
                                 </>
                             )}
                         </Tooltip>

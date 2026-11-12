@@ -169,7 +169,7 @@ class WizScoreBody extends React.Component<{
         const benchmark = (this.props.validator.fee_capture_benchmark!=null) ? ' ('+this.props.validator.fee_capture_benchmark.toFixed(2)+')' : '';
         let cutoff = "a multiple of the network skip rate this epoch";
         if(w) cutoff = (w.skip_rate_cutoff_floor) ? w.skip_rate_cutoff_floor+"% or "+w.skip_rate_cutoff_multiplier+"× the network skip rate this epoch, whichever is higher" : w.skip_rate_cutoff_multiplier+"× the network skip rate this epoch";
-        return "Producing blocks and packing them well. Score = skip score × fee capture score. Skip score falls linearly from full at 0% skipped to 0 at "+cutoff+". Fee capture score = this validator's fee capture index ÷ the network p90"+benchmark+", capped at 1. A validator that skips all its leader slots scores 0. Until the validator has had 12 leader slots this epoch, its previous epoch's figures are used. Skips are penalised more heavily in the Wiz Score than in the block packing gauge.";
+        return "Producing blocks and packing them well. Score = skip score × fee capture score. Skip score falls linearly from full at 0% skipped to 0 at "+cutoff+". Fee capture score = this validator's fee capture index ÷ the network p90"+benchmark+", capped at 1. A validator that skips all its leader slots scores 0. Until the validator has had 12 leader slots this epoch, its previous epoch's figures are used. Skips are penalised more heavily in the Wiz Score than in the block production gauge.";
     }
 
     renderMevValue() {
